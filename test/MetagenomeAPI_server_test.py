@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import unittest
-import os  # noqa: F401
+import os
 import json  # noqa: F401
 import time
-import requests
+import requests  # noqa: F401
+import shutil
 
 from os import environ
 try:
@@ -11,7 +12,11 @@ try:
 except:
     from configparser import ConfigParser  # py3
 
-from pprint import pprint  # noqa: F401
+from pprint import pprint
+
+
+from MetagenomeUtils.MetagenomeUtilsClient import MetagenomeUtils
+from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 
 from biokbase.workspace.client import Workspace as workspaceService
 from MetagenomeAPI.MetagenomeAPIImpl import MetagenomeAPI
@@ -51,23 +56,51 @@ class MetagenomeAPITest(unittest.TestCase):
         cls.scratch = cls.cfg['scratch']
         cls.callback_url = os.environ['SDK_CALLBACK_URL']
 
+        suffix = int(time.time() * 1000)
+        cls.wsName = "test_kb_maxbin_" + str(suffix)
+        cls.ws_info = cls.wsClient.create_workspace({'workspace': cls.wsName})
+
+        # create some test data
+        cls.au = AssemblyUtil(cls.callback_url)
+        cls.mu = MetagenomeUtils(cls.callback_url)
+
+        # building Assembly
+        assembly_filename = 'small_bin_contig_file.fasta'
+        cls.assembly_fasta_file_path = os.path.join(cls.scratch, assembly_filename)
+        shutil.copy(os.path.join("data", assembly_filename), cls.assembly_fasta_file_path)
+
+        assembly_params = {
+            'file': {'path': cls.assembly_fasta_file_path},
+            'workspace_name': cls.wsName,
+            'assembly_name': 'MyAssembly'
+        }
+        cls.assembly_ref_1 = cls.au.save_assembly_from_fasta(assembly_params)
+        print('Assembly1:' + cls.assembly_ref_1)
+
+        # stage and build BinnedContigs data
+        test_directory_name = 'test_maxbindata'
+        cls.test_directory_path = os.path.join(cls.scratch, test_directory_name)
+        os.makedirs(cls.test_directory_path)
+        for item in os.listdir(os.path.join("data", "MaxBin_Result_Sample")):
+            shutil.copy(os.path.join("data", "MaxBin_Result_Sample", item),
+                        os.path.join(cls.test_directory_path, item))
+
+        cls.binnedcontigs_ref_1 = cls.mu.file_to_binned_contigs({'file_directory': cls.test_directory_path,
+                                                                 'assembly_ref': cls.assembly_ref_1,
+                                                                 'binned_contig_name': 'MyBins',
+                                                                 'workspace_name': cls.wsName
+                                                                 })['binned_contig_obj_ref']
+        print('BinnedContigs1:' + cls.binnedcontigs_ref_1)
+
     @classmethod
     def tearDownClass(cls):
-        if hasattr(cls, 'wsName'):
-            cls.wsClient.delete_workspace({'workspace': cls.wsName})
-            print('Test workspace was deleted')
+        #if hasattr(cls, 'ws_info'):
+        #    cls.wsClient.delete_workspace({'workspace': cls.wsName})
+        #    print('Test workspace was deleted')
+        pass
 
     def getWsClient(self):
         return self.__class__.wsClient
-
-    def getWsName(self):
-        if hasattr(self.__class__, 'wsName'):
-            return self.__class__.wsName
-        suffix = int(time.time() * 1000)
-        wsName = "test_MetagenomeAPI_" + str(suffix)
-        ret = self.getWsClient().create_workspace({'workspace': wsName})  # noqa
-        self.__class__.wsName = wsName
-        return wsName
 
     def getImpl(self):
         return self.__class__.serviceImpl
@@ -76,7 +109,17 @@ class MetagenomeAPITest(unittest.TestCase):
         return self.__class__.ctx
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
-    def test_your_method(self):
+    def test_search_binned_contigs(self):
+
+
+        #search_params = {'ref': cls.binn 
+        #                }
+
+        #ret = self.getImpl().search_binnedcontigs({
+
+        #    })
+
+
         # Prepare test objects in workspace if needed using
         # self.getWsClient().save_objects({'workspace': self.getWsName(),
         #                                  'objects': []})

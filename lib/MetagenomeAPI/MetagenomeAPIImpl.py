@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 #BEGIN_HEADER
+
+from MetagenomeAPI.BinnedContigsIndexer import BinnedContigsIndexer
 #END_HEADER
 
 
@@ -29,6 +31,7 @@ class MetagenomeAPI:
     # be found
     def __init__(self, config):
         #BEGIN_CONSTRUCTOR
+        self.indexer = BinnedContigsIndexer(config)
         #END_CONSTRUCTOR
         pass
 
@@ -62,6 +65,13 @@ class MetagenomeAPI:
         # ctx is the context object
         # return variables are: result
         #BEGIN search_binned_contigs
+        result = self.indexer.search_binned_contigs(ctx["token"],
+                                                    params.get("ref", None),
+                                                    params.get("query", None),
+                                                    params.get("sort_by", None),
+                                                    params.get("start", None),
+                                                    params.get("limit", None),
+                                                    params.get("num_found", None))
         #END search_binned_contigs
 
         # At some point might do deeper type checking...
@@ -100,6 +110,13 @@ class MetagenomeAPI:
         # ctx is the context object
         # return variables are: result
         #BEGIN search_contigs_in_bin
+        result = self.indexer.search_contigs_in_bin(ctx["token"],
+                                                    params.get("ref", None),
+                                                    params.get("query", None),
+                                                    params.get("sort_by", None),
+                                                    params.get("start", None),
+                                                    params.get("limit", None),
+                                                    params.get("num_found", None))
         #END search_contigs_in_bin
 
         # At some point might do deeper type checking...
