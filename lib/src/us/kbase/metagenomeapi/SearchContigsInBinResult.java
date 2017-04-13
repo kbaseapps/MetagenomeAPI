@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "query",
     "bin_id",
     "start",
-    "bins",
+    "contigs",
     "num_found"
 })
 public class SearchContigsInBinResult {
@@ -37,8 +37,8 @@ public class SearchContigsInBinResult {
     private String binId;
     @JsonProperty("start")
     private Long start;
-    @JsonProperty("bins")
-    private List<ContigBinData> bins;
+    @JsonProperty("contigs")
+    private List<ContigInBin> contigs;
     @JsonProperty("num_found")
     private Long numFound;
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
@@ -88,18 +88,18 @@ public class SearchContigsInBinResult {
         return this;
     }
 
-    @JsonProperty("bins")
-    public List<ContigBinData> getBins() {
-        return bins;
+    @JsonProperty("contigs")
+    public List<ContigInBin> getContigs() {
+        return contigs;
     }
 
-    @JsonProperty("bins")
-    public void setBins(List<ContigBinData> bins) {
-        this.bins = bins;
+    @JsonProperty("contigs")
+    public void setContigs(List<ContigInBin> contigs) {
+        this.contigs = contigs;
     }
 
-    public SearchContigsInBinResult withBins(List<ContigBinData> bins) {
-        this.bins = bins;
+    public SearchContigsInBinResult withContigs(List<ContigInBin> contigs) {
+        this.contigs = contigs;
         return this;
     }
 
@@ -130,7 +130,7 @@ public class SearchContigsInBinResult {
 
     @Override
     public String toString() {
-        return ((((((((((((("SearchContigsInBinResult"+" [query=")+ query)+", binId=")+ binId)+", start=")+ start)+", bins=")+ bins)+", numFound=")+ numFound)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((("SearchContigsInBinResult"+" [query=")+ query)+", binId=")+ binId)+", start=")+ start)+", contigs=")+ contigs)+", numFound=")+ numFound)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

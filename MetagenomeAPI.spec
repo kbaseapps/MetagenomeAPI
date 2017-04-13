@@ -58,9 +58,6 @@ module MetagenomeAPI {
 
 
 
-
-
-
     /*
         num_found - optional field which when set informs that there
             is no need to perform full scan in order to count this
@@ -99,7 +96,7 @@ module MetagenomeAPI {
         string query;
         string bin_id;
         int start;
-        list<ContigBinData> bins;
+        list<ContigInBin> contigs;
         int num_found;
     } SearchContigsInBinResult;
 

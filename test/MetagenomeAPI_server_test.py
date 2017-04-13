@@ -60,6 +60,11 @@ class MetagenomeAPITest(unittest.TestCase):
         cls.wsName = "test_kb_maxbin_" + str(suffix)
         cls.ws_info = cls.wsClient.create_workspace({'workspace': cls.wsName})
 
+        # you could bypass creating objects for more rapid testing here
+        # cls.binnedcontigs_ref_1 = '19621/2/1'
+        # cls.assembly_ref_1 = '19621/1/1'
+        # return
+
         # create some test data
         cls.au = AssemblyUtil(cls.callback_url)
         cls.mu = MetagenomeUtils(cls.callback_url)
@@ -94,9 +99,9 @@ class MetagenomeAPITest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        #if hasattr(cls, 'ws_info'):
-        #    cls.wsClient.delete_workspace({'workspace': cls.wsName})
-        #    print('Test workspace was deleted')
+        if hasattr(cls, 'ws_info'):
+            cls.wsClient.delete_workspace({'workspace': cls.wsName})
+            print('Test workspace was deleted')
         pass
 
     def getWsClient(self):
@@ -108,25 +113,130 @@ class MetagenomeAPITest(unittest.TestCase):
     def getContext(self):
         return self.__class__.ctx
 
-    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     def test_search_binned_contigs(self):
 
+        # no query
+        search_params = {'ref': self.binnedcontigs_ref_1}
+        ret = self.getImpl().search_binned_contigs(self.getContext(), search_params)[0]
+        pprint(ret)
+        self.assertEquals(ret['num_found'], 3)
+        self.assertEquals(ret['query'], '')
+        self.assertEquals(ret['start'], 0)
+        self.assertEquals(len(ret['bins']), 3)
+        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.001.fasta')
+        self.assertEquals(ret['bins'][1]['bin_id'], 'out_header.002.fasta')
+        self.assertEquals(ret['bins'][2]['bin_id'], 'out_header.003.fasta')
 
-        #search_params = {'ref': cls.binn 
-        #                }
+        # with query
+        search_params = {'ref': self.binnedcontigs_ref_1, 'query': '7049'}
+        ret = self.getImpl().search_binned_contigs(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 1)
+        self.assertEquals(ret['query'], '7049')
+        self.assertEquals(ret['start'], 0)
+        self.assertEquals(len(ret['bins']), 1)
+        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.002.fasta')
 
-        #ret = self.getImpl().search_binnedcontigs({
+        # with limit
+        search_params = {'ref': self.binnedcontigs_ref_1, 'limit': 2}
+        ret = self.getImpl().search_binned_contigs(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 3)
+        self.assertEquals(ret['query'], '')
+        self.assertEquals(ret['start'], 0)
+        self.assertEquals(len(ret['bins']), 2)
+        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.001.fasta')
 
-        #    })
+        # with limit
+        search_params = {'ref': self.binnedcontigs_ref_1, 'start': 2, 'limit': 2}
+        ret = self.getImpl().search_binned_contigs(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 3)
+        self.assertEquals(ret['query'], '')
+        self.assertEquals(ret['start'], 2)
+        self.assertEquals(len(ret['bins']), 1)
+        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.003.fasta')
+
+        # sort by gc
+        search_params = {'ref': self.binnedcontigs_ref_1, 'limit': 2, 'sort_by': [['gc', 0]]}
+        ret = self.getImpl().search_binned_contigs(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 3)
+        self.assertEquals(ret['query'], '')
+        self.assertEquals(ret['start'], 0)
+        self.assertEquals(len(ret['bins']), 2)
+        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.003.fasta')
+        self.assertEquals(ret['bins'][1]['bin_id'], 'out_header.001.fasta')
+        search_params = {'ref': self.binnedcontigs_ref_1, 'sort_by': [['gc', 1]]}
+        ret = self.getImpl().search_binned_contigs(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 3)
+        self.assertEquals(ret['query'], '')
+        self.assertEquals(ret['start'], 0)
+        self.assertEquals(len(ret['bins']), 3)
+        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.002.fasta')
+        self.assertEquals(ret['bins'][1]['bin_id'], 'out_header.001.fasta')
+        self.assertEquals(ret['bins'][2]['bin_id'], 'out_header.003.fasta')
+
+        # todo: sort by other stuff
 
 
-        # Prepare test objects in workspace if needed using
-        # self.getWsClient().save_objects({'workspace': self.getWsName(),
-        #                                  'objects': []})
-        #
-        # Run your method by
-        # ret = self.getImpl().your_method(self.getContext(), parameters...)
-        #
-        # Check returned data with
-        # self.assertEqual(ret[...], ...) or other unittest methods
-        pass
+
+    def test_search_contigs_in_bin(self):
+
+        # no query
+        search_params = {'ref': self.binnedcontigs_ref_1, 'bin_id': 'out_header.002.fasta', 'limit': 5}
+        ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
+        pprint(ret)
+        self.assertEquals(ret['num_found'], 369)
+        self.assertEquals(ret['query'], '')
+        self.assertEquals(ret['bin_id'], 'out_header.002.fasta')
+        self.assertEquals(ret['start'], 0)
+        self.assertEquals(len(ret['contigs']), 5)
+        self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_2016_length_9353_cov_9.414948')
+
+        search_params = {'ref': self.binnedcontigs_ref_1, 'bin_id': 'out_header.002.fasta', 'limit': 5, 'start': 5}
+        ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 369)
+        self.assertEquals(ret['query'], '')
+        self.assertEquals(ret['bin_id'], 'out_header.002.fasta')
+        self.assertEquals(ret['start'], 5)
+        self.assertEquals(len(ret['contigs']), 5)
+        self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_2311_length_2281_cov_9.117930')
+
+        # simple query
+        search_params = {'ref': self.binnedcontigs_ref_1, 'query': '1678_cov_9.0399', 'bin_id': 'out_header.002.fasta'}
+        ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 1)
+        self.assertEquals(ret['query'], '1678_cov_9.0399')
+        self.assertEquals(ret['bin_id'], 'out_header.002.fasta')
+        self.assertEquals(ret['start'], 0)
+        self.assertEquals(len(ret['contigs']), 1)
+        self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_2131_length_1678_cov_9.039928')
+
+
+        # lookup the other contigs
+        search_params = {'ref': self.binnedcontigs_ref_1, 'bin_id': 'out_header.001.fasta', 'limit': 5, 'start': 5}
+        ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 81)
+        self.assertEquals(ret['bin_id'], 'out_header.001.fasta')
+
+        search_params = {'ref': self.binnedcontigs_ref_1, 'bin_id': 'out_header.003.fasta', 'limit': 5, 'start': 5}
+        ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 472)
+        self.assertEquals(ret['bin_id'], 'out_header.003.fasta')
+
+
+        # sort by length should work in both directions
+        search_params = {'ref': self.binnedcontigs_ref_1, 'bin_id': 'out_header.002.fasta', 'limit': 5, 'sort_by': [['len', 0]]}
+        ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 369)
+        self.assertEquals(ret['query'], '')
+        self.assertEquals(ret['bin_id'], 'out_header.002.fasta')
+        self.assertEquals(ret['start'], 0)
+        self.assertEquals(len(ret['contigs']), 5)
+        self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_2010_length_51632_cov_9.356794')
+
+        search_params = {'ref': self.binnedcontigs_ref_1, 'bin_id': 'out_header.002.fasta', 'limit': 5, 'sort_by': [['len', 1]]}
+        ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
+        self.assertEquals(ret['num_found'], 369)
+        self.assertEquals(ret['query'], '')
+        self.assertEquals(ret['bin_id'], 'out_header.002.fasta')
+        self.assertEquals(ret['start'], 0)
+        self.assertEquals(len(ret['contigs']), 5)
+        self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_2492_length_1446_cov_9.165283')

@@ -80,14 +80,12 @@ class MetagenomeAPI(object):
            number of all items found in query search (with only part of it
            returned in "bins" list).) -> structure: parameter "query" of
            String, parameter "bin_id" of String, parameter "start" of Long,
-           parameter "bins" of list of type "ContigBinData" (bin_id         
-           - id of the bin n_contigs       - number of contigs in this bin gc
-           - GC content over all the contigs sum_contig_len  - (bp) total
-           length of the contigs cov             - coverage over the bin (if
-           available, may be null)) -> structure: parameter "bin_id" of
-           String, parameter "n_contigs" of Long, parameter "gc" of Double,
-           parameter "sum_contig_len" of Long, parameter "cov" of Double,
-           parameter "num_found" of Long
+           parameter "contigs" of list of type "ContigInBin" (contig_id      
+           - id of the contig len             - (bp) length of the contig gc 
+           - GC content over the contig cov             - coverage over the
+           contig (if available, may be null)) -> structure: parameter
+           "contig_id" of String, parameter "len" of Long, parameter "gc" of
+           Double, parameter "cov" of Double, parameter "num_found" of Long
         """
         return self._client.call_method(
             'MetagenomeAPI.search_contigs_in_bin',

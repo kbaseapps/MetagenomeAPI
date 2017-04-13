@@ -263,13 +263,12 @@ SearchContigsInBinResult is a reference to a hash where the following keys are d
 	query has a value which is a string
 	bin_id has a value which is a string
 	start has a value which is an int
-	bins has a value which is a reference to a list where each element is a MetagenomeAPI.ContigBinData
+	contigs has a value which is a reference to a list where each element is a MetagenomeAPI.ContigInBin
 	num_found has a value which is an int
-ContigBinData is a reference to a hash where the following keys are defined:
-	bin_id has a value which is a string
-	n_contigs has a value which is an int
+ContigInBin is a reference to a hash where the following keys are defined:
+	contig_id has a value which is a string
+	len has a value which is an int
 	gc has a value which is a float
-	sum_contig_len has a value which is an int
 	cov has a value which is a float
 
 </pre>
@@ -296,13 +295,12 @@ SearchContigsInBinResult is a reference to a hash where the following keys are d
 	query has a value which is a string
 	bin_id has a value which is a string
 	start has a value which is an int
-	bins has a value which is a reference to a list where each element is a MetagenomeAPI.ContigBinData
+	contigs has a value which is a reference to a list where each element is a MetagenomeAPI.ContigInBin
 	num_found has a value which is an int
-ContigBinData is a reference to a hash where the following keys are defined:
-	bin_id has a value which is a string
-	n_contigs has a value which is an int
+ContigInBin is a reference to a hash where the following keys are defined:
+	contig_id has a value which is a string
+	len has a value which is an int
 	gc has a value which is a float
-	sum_contig_len has a value which is an int
 	cov has a value which is a float
 
 
@@ -769,7 +767,7 @@ a reference to a hash where the following keys are defined:
 query has a value which is a string
 bin_id has a value which is a string
 start has a value which is an int
-bins has a value which is a reference to a list where each element is a MetagenomeAPI.ContigBinData
+contigs has a value which is a reference to a list where each element is a MetagenomeAPI.ContigInBin
 num_found has a value which is an int
 
 </pre>
@@ -782,7 +780,7 @@ a reference to a hash where the following keys are defined:
 query has a value which is a string
 bin_id has a value which is a string
 start has a value which is an int
-bins has a value which is a reference to a list where each element is a MetagenomeAPI.ContigBinData
+contigs has a value which is a reference to a list where each element is a MetagenomeAPI.ContigInBin
 num_found has a value which is an int
 
 
