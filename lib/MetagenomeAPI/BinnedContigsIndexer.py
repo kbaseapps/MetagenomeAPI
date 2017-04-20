@@ -51,7 +51,6 @@ class BinnedContigsIndexer:
                   "], start=" + str(start) + ", limit=" + str(limit))
             t1 = time.time()
         inner_chsum = self.check_binnedcontigs_cache(ref, token)
-        print(inner_chsum)
         index_iter = self.get_binnedcontigs_sorted_iterator(inner_chsum, sort_by)
         ret = self.filter_binnedcontigs_query(index_iter, query, start, limit, num_found)
         if self.debug:
@@ -231,7 +230,7 @@ class BinnedContigsIndexer:
                     'cov': bin_cov
                     }
         except:
-            raise ValueError("Error parsing feature from: [" + line + "]\n" +
+            raise ValueError("Error parsing bin from: [" + line + "]\n" +
                              "Cause: " + traceback.format_exc())
 
     def search_contigs_in_bin(self, token, ref, bin_id, query, sort_by, start, limit, num_found):
@@ -361,5 +360,5 @@ class BinnedContigsIndexer:
                     'gc': contig_gc,
                     'cov': contig_cov}
         except:
-            raise ValueError("Error parsing feature from: [" + line + "]\n" +
+            raise ValueError("Error parsing contig from: [" + line + "]\n" +
                              "Cause: " + traceback.format_exc())
