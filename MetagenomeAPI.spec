@@ -102,4 +102,24 @@ module MetagenomeAPI {
 
     funcdef search_contigs_in_bin(SearchContigsInBin params)
         returns (SearchContigsInBinResult result) authentication optional;
+
+
+    /*
+      ref - workspace reference to AnnotatedMetagenomeAssembly Object
+      included_fields - The fields to include from the Object
+      included_feature_fields - 
+
+    */
+    typedef structure {
+      string ref;
+      list<string> included_fields;
+    } getAnnotatedMetagenomeAssemblyParams;
+
+    typedef structure {
+      list<UnspecifiedObject> genomes;
+    } getAnnotatedMetagenomeAssemblyOutput;
+
+    funcdef get_annotated_metagenome_assembly(getAnnotatedMetagenomeAssemblyParams params)
+        returns (getAnnotatedMetagenomeAssemblyOutput output) authentication required;
+
 };

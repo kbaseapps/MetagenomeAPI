@@ -22,7 +22,7 @@ from biokbase.workspace.client import Workspace as workspaceService
 from MetagenomeAPI.MetagenomeAPIImpl import MetagenomeAPI
 from MetagenomeAPI.MetagenomeAPIServer import MethodContext
 from MetagenomeAPI.authclient import KBaseAuth as _KBaseAuth
-
+from installed_clients.DataFileUtilClient import DataFileUtil
 
 class MetagenomeAPITest(unittest.TestCase):
 
@@ -68,6 +68,7 @@ class MetagenomeAPITest(unittest.TestCase):
         # create some test data
         cls.au = AssemblyUtil(cls.callback_url)
         cls.mu = MetagenomeUtils(cls.callback_url)
+        cls.dfu = DataFileUtil(cls.callback_url)
 
         # building Assembly
         assembly_filename = 'small_bin_contig_file.fasta'
@@ -107,11 +108,60 @@ class MetagenomeAPITest(unittest.TestCase):
     def getWsClient(self):
         return self.__class__.wsClient
 
+    def getWsName(self):
+        return self.ws_info[1]
+
+    def getWsID(self):
+        return self.ws_info[0]
+
     def getImpl(self):
         return self.__class__.serviceImpl
 
     def getContext(self):
         return self.__class__.ctx
+
+    def check_ret(self, ret, incl):
+        self.assertTrue('genomes' in ret)
+        data = ret.get('genomes')
+        data = data[0]['data']
+        for field in incl:
+            self.assertTrue(field in data, msg=f"{field} not in returned output. Available fields {data.keys()}")
+        # make sure one of the standard fields is not included
+        self.assertFalse('features_handle_ref' in data)
+
+    def save_metagenome(self):
+        json_file = "data/test_metagenome_object.json"
+        with open(json_file) as f:
+            data = json.load(f)
+        data['assembly_ref'] = "22385/57/1"
+        obj_info = self.dfu.save_objects({
+            'id': self.getWsID(),
+            "objects": [{
+                'type': "KBaseMetagenomes.AnnotatedMetagenomeAssembly",
+                'data': data,
+                'name': "test_metagenome"
+            }]
+        })[0]
+        return '/'.join([str(obj_info[6]), str(obj_info[0]), str(obj_info[4])])
+
+    def test_get_annotated_metagenome_assembly(self):
+        appdev_ref = self.save_metagenome()
+        incl = [
+            'dna_size',
+            'source_id',
+            'genetic_code',
+            'taxonomy',
+            'genetic_code',
+            'assembly_ref',
+            'gc_content',
+            'environment'
+        ]
+        params = {
+            'ref': appdev_ref,
+            'included_fields': incl,
+        }
+        ret = self.getImpl().get_annotated_metagenome_assembly(self.getContext(), params)[0]
+        self.check_ret(ret, incl)
 
     def test_search_binned_contigs(self):
 
@@ -123,8 +173,8 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['start'], 0)
         self.assertEquals(len(ret['bins']), 3)
-        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.001.fasta')
-        self.assertEquals(ret['bins'][1]['bin_id'], 'out_header.002.fasta')
+        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.002.fasta')
+        self.assertEquals(ret['bins'][1]['bin_id'], 'out_header.001.fasta')
         self.assertEquals(ret['bins'][2]['bin_id'], 'out_header.003.fasta')
 
         # with query
@@ -143,7 +193,7 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['start'], 0)
         self.assertEquals(len(ret['bins']), 2)
-        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.001.fasta')
+        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.002.fasta')
 
         # with limit
         search_params = {'ref': self.binnedcontigs_ref_1, 'start': 2, 'limit': 2}
@@ -176,7 +226,6 @@ class MetagenomeAPITest(unittest.TestCase):
         # todo: sort by other stuff
 
 
-
     def test_search_contigs_in_bin(self):
 
         # no query
@@ -188,7 +237,7 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['bin_id'], 'out_header.002.fasta')
         self.assertEquals(ret['start'], 0)
         self.assertEquals(len(ret['contigs']), 5)
-        self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_2016_length_9353_cov_9.414948')
+        self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_104_length_2559_cov_19.197733')
 
         search_params = {'ref': self.binnedcontigs_ref_1, 'bin_id': 'out_header.002.fasta', 'limit': 5, 'start': 5}
         ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
@@ -197,7 +246,7 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['bin_id'], 'out_header.002.fasta')
         self.assertEquals(ret['start'], 5)
         self.assertEquals(len(ret['contigs']), 5)
-        self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_2311_length_2281_cov_9.117930')
+        self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_1984_length_6967_cov_9.260514')
 
         # simple query
         search_params = {'ref': self.binnedcontigs_ref_1, 'query': '1678_cov_9.0399', 'bin_id': 'out_header.002.fasta'}

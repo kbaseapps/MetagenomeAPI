@@ -2,6 +2,8 @@
 #BEGIN_HEADER
 
 from MetagenomeAPI.BinnedContigsIndexer import BinnedContigsIndexer
+from Workspace.WorkspaceClient import Workspace
+from MetagenomeAPI.AMAUtils import AMAUtils
 #END_HEADER
 
 
@@ -20,9 +22,9 @@ class MetagenomeAPI:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.1"
-    GIT_URL = "git@github.com:kbaseapps/MetagenomeAPI.git"
-    GIT_COMMIT_HASH = "7634c360bd2e183bc19ffabcd00ebff113da28e6"
+    VERSION = "1.0.1"
+    GIT_URL = "https://github.com/slebras/MetagenomeAPI.git"
+    GIT_COMMIT_HASH = "48b0191b78f137ddeb9fa6d8a58668c16c95491c"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
@@ -32,6 +34,7 @@ class MetagenomeAPI:
     def __init__(self, config):
         #BEGIN_CONSTRUCTOR
         self.indexer = BinnedContigsIndexer(config)
+        self.config = config
         #END_CONSTRUCTOR
         pass
 
@@ -124,6 +127,32 @@ class MetagenomeAPI:
                              'result is not type dict as required.')
         # return the results
         return [result]
+
+    def get_annotated_metagenome_assembly(self, ctx, params):
+        """
+        :param params: instance of type
+           "getAnnotatedMetagenomeAssemblyParams" (ref - workspace reference
+           to AnnotatedMetagenomeAssembly Object included_fields - The fields
+           to include from the Object included_feature_fields -) ->
+           structure: parameter "ref" of String, parameter "included_fields"
+           of list of String
+        :returns: instance of type "getAnnotatedMetagenomeAssemblyOutput" ->
+           structure: parameter "genomes" of list of unspecified object
+        """
+        # ctx is the context object
+        # return variables are: output
+        #BEGIN get_annotated_metagenome_assembly
+        ws = Workspace(self.config['workspace-url'], token=ctx['token'])
+        ama_utils = AMAUtils(ws)
+        output = ama_utils.get_annotated_metagenome_assembly(params)
+        #END get_annotated_metagenome_assembly
+
+        # At some point might do deeper type checking...
+        if not isinstance(output, dict):
+            raise ValueError('Method get_annotated_metagenome_assembly return value ' +
+                             'output is not type dict as required.')
+        # return the results
+        return [output]
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",
