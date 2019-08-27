@@ -24,7 +24,7 @@ class MetagenomeAPI:
     ######################################### noqa
     VERSION = "1.0.1"
     GIT_URL = "https://github.com/slebras/MetagenomeAPI.git"
-    GIT_COMMIT_HASH = "e401fa825eea4ab389fdc7a910d6936d9cf8b2e2"
+    GIT_COMMIT_HASH = "48b0191b78f137ddeb9fa6d8a58668c16c95491c"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
