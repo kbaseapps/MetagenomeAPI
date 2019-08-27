@@ -182,7 +182,8 @@ class BinnedContigsIndexer:
         return CombinedLineIterator(final_output_file)
 
     def filter_binnedcontigs_query(self, index_iter, query, start, limit, num_found):
-        query_words = str(query).lower().translate(string.maketrans("\r\n\t,", "    ")).split()
+        query_words = (str(query).lower().replace('\n',' ').replace('\r',' ').replace('\t',' ').replace(',',' ')).split()
+        # query_words = str(query).lower().translate(string.maketrans("\r\n\t,", "    ")).split()
         if self.debug:
             print("    Filtering...")
             t1 = time.time()
@@ -260,7 +261,7 @@ class BinnedContigsIndexer:
         info = ws.get_object_info3({"objects": [{"ref": binnedcontigs_ref}]})['infos'][0]
 
         # base64 encode the string so it is safe for filenames and still unique per contig id
-        b64key = base64.urlsafe_b64encode(bin_id)
+        b64key = base64.urlsafe_b64encode(bin_id.encode("utf-8")).decode('utf-8')
 
         inner_chsum = info[8] + '_' + b64key
         index_file = os.path.join(self.metagenome_index_dir, inner_chsum + self.CONTIGS_SUFFIX + ".tsv.gz")
@@ -295,7 +296,7 @@ class BinnedContigsIndexer:
         return inner_chsum
 
     def save_contigs_in_bin_tsv(self, contigs, inner_chsum):
-        outfile = tempfile.NamedTemporaryFile(dir=self.metagenome_index_dir,
+        outfile = tempfile.NamedTemporaryFile(dir=self.metagenome_index_dir, mode='w+',
                                               prefix=inner_chsum + self.CONTIGS_SUFFIX, suffix=".tsv", delete=False)
 
         with outfile:
@@ -312,7 +313,7 @@ class BinnedContigsIndexer:
                 if 'cov' in info:
                     contig_cov = str(info['cov'])
 
-                outfile.write("\t".join(x for x in [contig_id, contig_len, contig_gc, contig_cov]) + "\n")
+                outfile.write("\t".join([contig_id, contig_len, contig_gc, contig_cov]) + "\n")
 
         subprocess.Popen(["gzip", outfile.name],
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
@@ -324,7 +325,8 @@ class BinnedContigsIndexer:
                                         self.contigs_in_bin_column_props_map)
 
     def filter_contig_query(self, index_iter, query, bin_id, start, limit, num_found):
-        query_words = str(query).lower().translate(string.maketrans("\r\n\t,", "    ")).split()
+        query_words = (str(query).lower().replace('\n',' ').replace('\r',' ').replace('\t',' ').replace(',',' ')).split()
+        # query_words = str(query).lower().translate(string.maketrans("\r\n\t,", "    ")).split()
         if self.debug:
             print("    Filtering...")
             t1 = time.time()

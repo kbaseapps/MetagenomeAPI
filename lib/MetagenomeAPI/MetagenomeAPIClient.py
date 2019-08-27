@@ -12,7 +12,7 @@ from __future__ import print_function
 try:
     # baseclient and this client are in a package
     from .baseclient import BaseClient as _BaseClient  # @UnusedImport
-except:
+except ImportError:
     # no they aren't
     from baseclient import BaseClient as _BaseClient  # @Reimport
 
@@ -23,7 +23,7 @@ class MetagenomeAPI(object):
             self, url=None, timeout=30 * 60, user_id=None,
             password=None, token=None, ignore_authrc=False,
             trust_all_ssl_certificates=False,
-            auth_svc='https://kbase.us/services/authorization/Sessions/Login'):
+            auth_svc='https://ci.kbase.us/services/auth/api/legacy/KBase/Sessions/Login'):
         if url is None:
             raise ValueError('A url is required')
         self._service_ver = None
@@ -59,9 +59,8 @@ class MetagenomeAPI(object):
            "sum_contig_len" of Long, parameter "cov" of Double, parameter
            "num_found" of Long
         """
-        return self._client.call_method(
-            'MetagenomeAPI.search_binned_contigs',
-            [params], self._service_ver, context)
+        return self._client.call_method('MetagenomeAPI.search_binned_contigs',
+                                        [params], self._service_ver, context)
 
     def search_contigs_in_bin(self, params, context=None):
         """
@@ -87,9 +86,22 @@ class MetagenomeAPI(object):
            "contig_id" of String, parameter "len" of Long, parameter "gc" of
            Double, parameter "cov" of Double, parameter "num_found" of Long
         """
-        return self._client.call_method(
-            'MetagenomeAPI.search_contigs_in_bin',
-            [params], self._service_ver, context)
+        return self._client.call_method('MetagenomeAPI.search_contigs_in_bin',
+                                        [params], self._service_ver, context)
+
+    def get_annotated_metagenome_assembly(self, params, context=None):
+        """
+        :param params: instance of type
+           "getAnnotatedMetagenomeAssemblyParams" (ref - workspace reference
+           to AnnotatedMetagenomeAssembly Object included_fields - The fields
+           to include from the Object included_feature_fields -) ->
+           structure: parameter "ref" of String, parameter "included_fields"
+           of list of String
+        :returns: instance of type "getAnnotatedMetagenomeAssemblyOutput" ->
+           structure: parameter "genomes" of list of unspecified object
+        """
+        return self._client.call_method('MetagenomeAPI.get_annotated_metagenome_assembly',
+                                        [params], self._service_ver, context)
 
     def status(self, context=None):
         return self._client.call_method('MetagenomeAPI.status',

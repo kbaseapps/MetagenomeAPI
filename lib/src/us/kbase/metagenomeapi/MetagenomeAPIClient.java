@@ -195,6 +195,23 @@ public class MetagenomeAPIClient {
         return res.get(0);
     }
 
+    /**
+     * <p>Original spec-file function name: get_annotated_metagenome_assembly</p>
+     * <pre>
+     * </pre>
+     * @param   params   instance of type {@link us.kbase.metagenomeapi.GetAnnotatedMetagenomeAssemblyParams GetAnnotatedMetagenomeAssemblyParams} (original type "getAnnotatedMetagenomeAssemblyParams")
+     * @return   parameter "output" of type {@link us.kbase.metagenomeapi.GetAnnotatedMetagenomeAssemblyOutput GetAnnotatedMetagenomeAssemblyOutput} (original type "getAnnotatedMetagenomeAssemblyOutput")
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public GetAnnotatedMetagenomeAssemblyOutput getAnnotatedMetagenomeAssembly(GetAnnotatedMetagenomeAssemblyParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(params);
+        TypeReference<List<GetAnnotatedMetagenomeAssemblyOutput>> retType = new TypeReference<List<GetAnnotatedMetagenomeAssemblyOutput>>() {};
+        List<GetAnnotatedMetagenomeAssemblyOutput> res = caller.jsonrpcCall("MetagenomeAPI.get_annotated_metagenome_assembly", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        return res.get(0);
+    }
+
     public Map<String, Object> status(RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
         TypeReference<List<Map<String, Object>>> retType = new TypeReference<List<Map<String, Object>>>() {};
