@@ -23,6 +23,7 @@ if __name__ == "__main__":
                 "kbase_endpoint = " + kbase_endpoint + "\n" + \
                 "job_service_url = " + kbase_endpoint + "/userandjobstate\n" + \
                 "workspace_url = " + kbase_endpoint + "/ws\n" + \
+                "elastic_url = " + kbase_endpoint + "/searchapi2/rpc\n" + \
                 "shock_url = " + kbase_endpoint + "/shock-api\n" + \
                 "handle_url = " + kbase_endpoint + "/handle_service\n" + \
                 "srv_wiz_url = " + kbase_endpoint + "/service_wizard\n" + \
@@ -35,7 +36,7 @@ if __name__ == "__main__":
             if key.startswith('KBASE_SECURE_CONFIG_PARAM_'):
                 param_name = key[len('KBASE_SECURE_CONFIG_PARAM_'):]
                 props += param_name + " = " + os.environ.get(key) + "\n"
-        config.read(io.StringIO(props))
+        config.readfp(io.StringIO(props))
     else:
         raise ValueError('Neither ' + sys.argv[2] + ' file nor KBASE_ENDPOINT env-variable found')
     props = dict(config.items("global"))
