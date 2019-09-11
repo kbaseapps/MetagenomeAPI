@@ -350,6 +350,14 @@ class Application(object):
                              name='MetagenomeAPI.get_annotated_metagenome_assembly',
                              types=[dict])
         self.method_authentication['MetagenomeAPI.get_annotated_metagenome_assembly'] = 'required'  # noqa
+        self.rpc_service.add(impl_MetagenomeAPI.search,
+                             name='MetagenomeAPI.search',
+                             types=[dict])
+        self.method_authentication['MetagenomeAPI.search'] = 'optional'  # noqa
+        self.rpc_service.add(impl_MetagenomeAPI.search_region,
+                             name='MetagenomeAPI.search_region',
+                             types=[dict])
+        self.method_authentication['MetagenomeAPI.search_region'] = 'required'  # noqa
         self.rpc_service.add(impl_MetagenomeAPI.status,
                              name='MetagenomeAPI.status',
                              types=[dict])

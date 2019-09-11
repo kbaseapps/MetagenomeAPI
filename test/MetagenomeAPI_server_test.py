@@ -133,7 +133,10 @@ class MetagenomeAPITest(unittest.TestCase):
         json_file = "data/test_metagenome_object.json"
         with open(json_file) as f:
             data = json.load(f)
-        data['assembly_ref'] = "22385/57/1"
+        if 'appdev' in self.wsURL:
+            data['assembly_ref'] = "22385/57/1"
+        if 'ci' in self.wsURL:
+            data['assembly_ref'] = "43655/43/1"
         obj_info = self.dfu.save_objects({
             'id': self.getWsID(),
             "objects": [{
@@ -143,6 +146,36 @@ class MetagenomeAPITest(unittest.TestCase):
             }]
         })[0]
         return '/'.join([str(obj_info[6]), str(obj_info[0]), str(obj_info[4])])
+
+    @unittest.skip('x')
+    def test_region_search(self):
+        """
+        """
+        ref = ""
+        params = {
+            "ref": ref,
+            "contig_id": "1235",
+            "region_start": 20000,
+            "region_length": 20000,
+            "page_start": 0,
+            "page_limit": 100,
+            "sort_by": [("starts", 0)]
+        }
+        ret = self.getImpl().search(self.getContext(), params)[0]
+
+    @unittest.skip('x')
+    def test_search(self):
+        """
+        TODO: this test can currently not be implemented as there are no ama features indexed
+        """
+        ref = ""
+        params = {
+            'ref': ref, #  reference to an AnnotatedMetagenomeAssembly object
+            'sort_by': [('obj_name', 1)],
+            'start': 0,
+            'limit': 10
+        }
+        ret = self.getImpl().search(self.getContext(), params)[0]
 
     def test_get_annotated_metagenome_assembly(self):
         appdev_ref = self.save_metagenome()
