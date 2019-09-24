@@ -12,7 +12,7 @@ try:
 except:
     from configparser import ConfigParser  # py3
 
-from pprint import pprint
+# from pprint import pprint
 
 
 from MetagenomeUtils.MetagenomeUtilsClient import MetagenomeUtils
@@ -147,11 +147,11 @@ class MetagenomeAPITest(unittest.TestCase):
         })[0]
         return '/'.join([str(obj_info[6]), str(obj_info[0]), str(obj_info[4])])
 
-    @unittest.skip('x')
+    # @unittest.skip('x')
     def test_region_search(self):
         """
         """
-        ref = ""
+        ref = "43655/58/1"
         params = {
             "ref": ref,
             "contig_id": "1235",
@@ -159,25 +159,27 @@ class MetagenomeAPITest(unittest.TestCase):
             "region_length": 20000,
             "page_start": 0,
             "page_limit": 100,
-            "sort_by": [("starts", 0)]
+            "sort_by": [("starts", 1), ('stops', 1)]
         }
         ret = self.getImpl().search(self.getContext(), params)[0]
 
-    @unittest.skip('x')
+    # @unittest.skip('x')
     def test_search(self):
         """
-        TODO: this test can currently not be implemented as there are no ama features indexed
+
+        NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
-        ref = ""
+        ref = "43655/58/1"
         params = {
             'ref': ref, #  reference to an AnnotatedMetagenomeAssembly object
-            'sort_by': [('obj_name', 1)],
+            'sort_by': [('id', 1)],
             'start': 0,
             'limit': 10
         }
         ret = self.getImpl().search(self.getContext(), params)[0]
 
     def test_get_annotated_metagenome_assembly(self):
+        """"""
         appdev_ref = self.save_metagenome()
         incl = [
             'dna_size',
@@ -201,7 +203,7 @@ class MetagenomeAPITest(unittest.TestCase):
         # no query
         search_params = {'ref': self.binnedcontigs_ref_1}
         ret = self.getImpl().search_binned_contigs(self.getContext(), search_params)[0]
-        pprint(ret)
+        # pprint(ret)
         self.assertEquals(ret['num_found'], 3)
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['start'], 0)
@@ -264,7 +266,7 @@ class MetagenomeAPITest(unittest.TestCase):
         # no query
         search_params = {'ref': self.binnedcontigs_ref_1, 'bin_id': 'out_header.002.fasta', 'limit': 5}
         ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
-        pprint(ret)
+        # pprint(ret)
         self.assertEquals(ret['num_found'], 369)
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['bin_id'], 'out_header.002.fasta')

@@ -11,7 +11,7 @@ class MetagenomeSearchUtils:
         if config.get('elastic-url'):
             self.es_url = config.get('elastic-url')
         else:
-            self.es_url = config.get('workspace-url').replace('/ws', '/shockapi2/rpc')
+            self.es_url = config.get('workspace-url').replace('/ws', '/searchapi2/rpc')
 
         self.debug = "debug" in config and config["debug"] == "1"
         self.max_sort_mem_size = 250000
@@ -33,7 +33,7 @@ class MetagenomeSearchUtils:
         if limit is None:
             limit = 1000
         if sort_by is None:
-            sort_by = [('starts', 0)]
+            sort_by = [('starts', 1), ('stops', 1)]
 
         t1 = time.time()
         extra_query = {
@@ -46,10 +46,7 @@ class MetagenomeSearchUtils:
                 }
             }
         }
-        workspace_id = ref.split('/')[0]
-        object_id = ref.split('/')[1]
-
-        ret = self.elastic_query(token, workspace_id, object_id, limit, start, sort_by, extra_query=extra_query)
+        ret = self._elastic_query(token, ref, limit, start, sort_by, extra_query=extra_query)
         # not sure we need to include any of these
         ret['region_start'] = region_start
         ret['contig_id'] = contig_id
@@ -71,19 +68,19 @@ class MetagenomeSearchUtils:
         if limit is None:
             limit = 50
         if sort_by is None:
-            sort_by = [('obj_name', 0)]
+            sort_by = [('id', 1)]
 
         t1 = time.time()
-        workspace_id = ref.split('/')[0]
-        object_id = ref.split('/')[1]
-        ret = self.elastic_query(token, workspace_id, object_id, limit, start, sort_by)
+        ret = self._elastic_query(token, ref, limit, start, sort_by)
         if self.debug:
             print(("    (overall-time=" + str(time.time() - t1) + ")"))
         return ret
 
-    def _elastic_query(self, token, workspace_id, object_id, results_size, from_result, sort_by, extra_query={}):
+    def _elastic_query(self, token, ref, results_size, from_result, sort_by, extra_query={}):
         """"""
-        ama_id = f'WS::{workspace_id}:{object_id}'
+        (workspace_id, object_id, version) = ref.split('/')
+        # we use namespace 'WSVER' for versioned elasticsearch index.
+        ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
 
         headers = {"Authorization": token}
         params = {
@@ -93,15 +90,17 @@ class MetagenomeSearchUtils:
                     "term": {"parent_id": ama_id},
                     **extra_query
                 },
-                "indexes": ["annotated_metagenome_assembly_features"],
+                "indexes": ["annotated_metagenome_assembly_features_version:1"],
                 "from": from_result,
-                "size": results_size
+                "size": results_size,
+                "sort": [{s[0]: {"order": "asc" if s[1] else "desc"}} for s in sort_by]
             }
         }
         resp = requests.post(self.es_url, headers=headers, data=json.dumps(params))
         if not resp.ok:
-            raise Exception(f"Not able to complete searchapi2/rpc request with parameters: {params}")
-        return self._process_resp(resp, from_result, params)
+            raise Exception(f"Not able to complete search request against {self.es_url} with parameters: {params} \nResponse body: {resp.text}")
+        respj = resp.json()
+        return self._process_resp(respj, from_result, params)
 
     def _process_resp(self, resp, start, params):
         """"""
@@ -113,6 +112,8 @@ class MetagenomeSearchUtils:
                 "query": params,
                 "features": [self._process_feature(h['_source']) for h in hits]
             }
+        else:
+            raise RuntimeError(f"no 'hits' in http response: {resp}")
 
     def _process_feature(self, hit_source):
         """"""
@@ -128,21 +129,23 @@ class MetagenomeSearchUtils:
                 'start': starts[i],
                 'stop': stops[i],
                 'strand': strands[i]
-            } for i in len(starts)]
+            } for i in range(len(starts))]
         else:
             location = []
 
         if len(location) > 0:
             # TODO: FIX THIS NOT ACTUALLY ACCURATE
             gloc = location[0]
-
+        functions = hit_source.get('functions', [])
+        if functions is not None:
+            functions = '; '.join(functions)
         return {
             "location": location,
             "feature_id": hit_source.get('id'),
             "feature_type": hit_source.get('type'),
             "global_location": gloc,
             "aliases": {},
-            "function": "; ".join(hit_source.get('functions', [])),
+            "function": functions,
             "ontology_terms": {}
         }
 

@@ -191,8 +191,8 @@ class MetagenomeAPI:
         # ctx is the context object
         # return variables are: result
         #BEGIN search
-        result = self.msu.search(ctx['token'], params.get('ref'), params.get('contig_id'),
-                                 params.get('start'), params.get('limit'), params.get('sort_by'))
+        result = self.msu.search(ctx['token'], params.get('ref'), params.get('start'),
+                                 params.get('limit'), params.get('sort_by'))
         #END search
 
         # At some point might do deeper type checking...
