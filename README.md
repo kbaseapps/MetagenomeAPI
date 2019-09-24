@@ -11,4 +11,36 @@ The MetagenomeAPI is intended as an all around utility for the KBaseMetagenomes 
 
 ## Search
 
+The MetagenomeAPI serves as a backend-client for searching features of the `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object. The `search` and `search_region` functions are designed to use the KBase Search2API, where the workspace objects are indexed in _versioned_ documents.
 
+### search
+the `search` function uses the following input parameters:
+	- ref: `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object reference
+    - sort_by: list of tuples by which to sort by, ex: [("elasticsearch ", ascend bool), ...]
+    - start: integer start of pagination
+    - limit: integer end of pagination
+
+... and returns:
+    - query: the query used on the Search2API
+    - start: integer index start of pagination
+    - features: list of feature information.
+    - num_found: the total number of matches with the query (without pagination)
+
+
+### search_region
+the `search_region` function uses the following as input:
+	- ref: `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object reference
+    - contig_id: id of contig to search around.
+    - region_start: integer start of contig context to search around.
+    - region_length: integer lenght of contig context to search around.
+    - page_start: integer start of pagination
+    - page_limit: integer end of pagination
+    - sort_by: list of tuples by which to sort by, ex: [("elasticsearch ", ascend bool), ...]
+
+.. and returns:
+    - contig_id: id of contig to search around, (same as input).
+    - region_start: integer start of contig context to search around, (same as input).
+    - region_length: integer lenght of contig context to search around, (same as input).
+    - page_start: integer start of pagination
+    - features: list of feature information.
+    - num_found: the total number of matches with the query (without pagination)
