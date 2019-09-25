@@ -23,7 +23,7 @@ if __name__ == "__main__":
                 "kbase_endpoint = " + kbase_endpoint + "\n" + \
                 "job_service_url = " + kbase_endpoint + "/userandjobstate\n" + \
                 "workspace_url = " + kbase_endpoint + "/ws\n" + \
-                "elastic_url = " + kbase_endpoint + "/searchapi2/rpc\n" + \
+                "search_url = " + kbase_endpoint + "/searchapi2/rpc\n" + \
                 "shock_url = " + kbase_endpoint + "/shock-api\n" + \
                 "handle_url = " + kbase_endpoint + "/handle_service\n" + \
                 "srv_wiz_url = " + kbase_endpoint + "/service_wizard\n" + \

@@ -9,9 +9,9 @@ class MetagenomeSearchUtils:
 
     def __init__(self, config):
         if config.get('elastic-url'):
-            self.es_url = config.get('elastic-url')
+            self.search_url = config.get('search-url')
         else:
-            self.es_url = config.get('workspace-url').replace('/ws', '/searchapi2/rpc')
+            self.search_url = config.get('kbase-endpoint') + '/searchapi2/rpc'
 
         self.debug = "debug" in config and config["debug"] == "1"
         self.max_sort_mem_size = 250000
@@ -101,9 +101,9 @@ class MetagenomeSearchUtils:
                 "sort": [{s[0]: {"order": "asc" if s[1] else "desc"}} for s in sort_by]
             }
         }
-        resp = requests.post(self.es_url, headers=headers, data=json.dumps(params))
+        resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
         if not resp.ok:
-            raise Exception(f"Not able to complete search request against {self.es_url} "
+            raise Exception(f"Not able to complete search request against {self.search_url} "
                             f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
         respj = resp.json()
         return self._process_resp(respj, from_result, params)

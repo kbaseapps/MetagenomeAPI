@@ -30,9 +30,9 @@ the `search` function uses the following input parameters:
 ### search_region
 the `search_region` function uses the following as input:
 	- ref: `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object reference
-    - contig_id: id of contig to search around.
-    - region_start: integer start of contig context to search around.
-    - region_length: integer lenght of contig context to search around.
+    - contig_id: id of contig to search .
+    - region_start: integer start of contig context to search.
+    - region_length: integer lenght of contig context to search.
     - page_start: integer start of pagination
     - page_limit: integer end of pagination
     - sort_by: list of tuples by which to sort by, ex: [("elasticsearch ", ascend bool), ...]

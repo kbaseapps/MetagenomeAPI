@@ -153,6 +153,7 @@ class MetagenomeAPITest(unittest.TestCase):
     def test_region_search(self):
         """
         """
+        self.maxDiff=None
         ref = "43655/58/1"
         params = {
             "ref": ref,
@@ -181,6 +182,7 @@ class MetagenomeAPITest(unittest.TestCase):
 
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
+        self.maxDiff=None
         ref = "43655/58/1"
         params = {
             'ref': ref, #  reference to an AnnotatedMetagenomeAssembly object
