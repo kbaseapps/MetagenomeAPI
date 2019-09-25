@@ -8,7 +8,7 @@ import time
 class MetagenomeSearchUtils:
 
     def __init__(self, config):
-        if config.get('elastic-url'):
+        if config.get('search-url'):
             self.search_url = config.get('search-url')
         else:
             self.search_url = config.get('kbase-endpoint') + '/searchapi2/rpc'
