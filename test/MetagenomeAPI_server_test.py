@@ -13,7 +13,9 @@ except:
     from configparser import ConfigParser  # py3
 
 # from pprint import pprint
-
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+_DIR = os.path.dirname(os.path.realpath(__file__))
 
 from MetagenomeUtils.MetagenomeUtilsClient import MetagenomeUtils
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
@@ -161,7 +163,17 @@ class MetagenomeAPITest(unittest.TestCase):
             "page_limit": 100,
             "sort_by": [("starts", 1), ('stops', 1)]
         }
-        ret = self.getImpl().search(self.getContext(), params)[0]
+        ret = self.getImpl().search_region(self.getContext(), params)[0]
+        self.assertTrue('contig_id' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('region_length' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('features' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('region_start' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('num_found' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('start' in ret, msg=f"returned: {ret.keys()}")
+        compare_path = os.path.join(_DIR, "data", "search_region_test_resp_ci_43655_58_1.json")
+        with open(compare_path) as f:
+            compare = json.load(f)
+        self.assertEqual(ret, compare)
 
     # @unittest.skip('x')
     def test_search(self):
@@ -177,7 +189,16 @@ class MetagenomeAPITest(unittest.TestCase):
             'limit': 10
         }
         ret = self.getImpl().search(self.getContext(), params)[0]
+        self.assertTrue('features' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('start' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('num_found' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('query' in ret, msg=f"returned: {ret.keys()}")
+        compare_path = os.path.join(_DIR, "data", "search_test_resp_ci_43655_58_1.json")
+        with open(compare_path) as f:
+            compare = json.load(f)
+        self.assertEqual(ret, compare)
 
+    # @unittest.skip('x')
     def test_get_annotated_metagenome_assembly(self):
         """"""
         appdev_ref = self.save_metagenome()
@@ -198,6 +219,7 @@ class MetagenomeAPITest(unittest.TestCase):
         ret = self.getImpl().get_annotated_metagenome_assembly(self.getContext(), params)[0]
         self.check_ret(ret, incl)
 
+    # @unittest.skip('x')
     def test_search_binned_contigs(self):
 
         # no query
@@ -260,7 +282,7 @@ class MetagenomeAPITest(unittest.TestCase):
 
         # todo: sort by other stuff
 
-
+    # @unittest.skip('x')
     def test_search_contigs_in_bin(self):
 
         # no query

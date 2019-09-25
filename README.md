@@ -41,6 +41,6 @@ the `search_region` function uses the following as input:
     - contig_id: id of contig to search around, (same as input).
     - region_start: integer start of contig context to search around, (same as input).
     - region_length: integer lenght of contig context to search around, (same as input).
-    - page_start: integer start of pagination
+    - start: integer start of pagination
     - features: list of feature information.
     - num_found: the total number of matches with the query (without pagination)

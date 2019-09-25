@@ -36,16 +36,20 @@ class MetagenomeSearchUtils:
             sort_by = [('starts', 1), ('stops', 1)]
 
         t1 = time.time()
-        extra_query = {
-            "range": {
-                "starts": {
-                    "gte": int(region_start)
-                },
-                "stops": {
-                    "lte": int(region_start + region_length)
+        extra_query = [
+            {
+                "range": {
+                    "starts": {
+                        "gte": int(region_start)
+                    }
+                }
+            },{"range": {
+                    "stops": {
+                        "lte": int(region_start + region_length)
+                    }
                 }
             }
-        }
+        ]
         ret = self._elastic_query(token, ref, limit, start, sort_by, extra_query=extra_query)
         # not sure we need to include any of these
         ret['region_start'] = region_start
@@ -76,7 +80,7 @@ class MetagenomeSearchUtils:
             print(("    (overall-time=" + str(time.time() - t1) + ")"))
         return ret
 
-    def _elastic_query(self, token, ref, results_size, from_result, sort_by, extra_query={}):
+    def _elastic_query(self, token, ref, results_size, from_result, sort_by, extra_query=[]):
         """"""
         (workspace_id, object_id, version) = ref.split('/')
         # we use namespace 'WSVER' for versioned elasticsearch index.
@@ -87,8 +91,9 @@ class MetagenomeSearchUtils:
             "method": "search_objects",
             "params": {
                 "query": {
-                    "term": {"parent_id": ama_id},
-                    **extra_query
+                    "bool": {"must": [{"term": {"parent_id": ama_id}}] + extra_query}
+                    # "term": {"parent_id": ama_id},
+                    # **extra_query
                 },
                 "indexes": ["annotated_metagenome_assembly_features_version:1"],
                 "from": from_result,
@@ -98,7 +103,8 @@ class MetagenomeSearchUtils:
         }
         resp = requests.post(self.es_url, headers=headers, data=json.dumps(params))
         if not resp.ok:
-            raise Exception(f"Not able to complete search request against {self.es_url} with parameters: {params} \nResponse body: {resp.text}")
+            raise Exception(f"Not able to complete search request against {self.es_url} "
+                            f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
         respj = resp.json()
         return self._process_resp(respj, from_result, params)
 
