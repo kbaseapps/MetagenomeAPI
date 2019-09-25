@@ -13,7 +13,7 @@ class MetagenomeSearchUtils:
         else:
             self.search_url = config.get('kbase-endpoint') + '/searchapi2/rpc'
 
-        self.debug = "debug" in config and config["debug"] == "1"
+        self.debug = config.get("debug") == "1"
         self.max_sort_mem_size = 250000
 
     def search_region(self, token, ref, contig_id, region_start, region_length, start, limit, sort_by):
