@@ -4,6 +4,7 @@
 from MetagenomeAPI.BinnedContigsIndexer import BinnedContigsIndexer
 from Workspace.WorkspaceClient import Workspace
 from MetagenomeAPI.AMAUtils import AMAUtils
+from MetagenomeAPI.MetagenomeSearchUtils import MetagenomeSearchUtils
 #END_HEADER
 
 
@@ -24,7 +25,7 @@ class MetagenomeAPI:
     ######################################### noqa
     VERSION = "1.0.1"
     GIT_URL = "https://github.com/slebras/MetagenomeAPI.git"
-    GIT_COMMIT_HASH = "48b0191b78f137ddeb9fa6d8a58668c16c95491c"
+    GIT_COMMIT_HASH = "4063f58d6a6fd445a294f38988a42be14818884a"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
@@ -34,6 +35,7 @@ class MetagenomeAPI:
     def __init__(self, config):
         #BEGIN_CONSTRUCTOR
         self.indexer = BinnedContigsIndexer(config)
+        self.msu = MetagenomeSearchUtils(config)
         self.config = config
         #END_CONSTRUCTOR
         pass
@@ -153,6 +155,103 @@ class MetagenomeAPI:
                              'output is not type dict as required.')
         # return the results
         return [output]
+
+    def search(self, ctx, params):
+        """
+        :param params: instance of type "SearchOptions" -> structure:
+           parameter "ref" of String, parameter "sort_by" of list of type
+           "column_sorting" -> tuple of size 2: parameter "column" of String,
+           parameter "ascending" of type "boolean" (Indicates true or false
+           values, false = 0, true = 1 @range [0,1]), parameter "start" of
+           Long, parameter "limit" of Long
+        :returns: instance of type "SearchResult" (num_found - number of all
+           items found in query search (with only part of it returned in
+           "features" list).) -> structure: parameter "query" of String,
+           parameter "start" of Long, parameter "features" of list of type
+           "FeatureData" (aliases - mapping from alias name (key) to set of
+           alias sources (value), global_location - this is location-related
+           properties that are under sorting whereas items in "location"
+           array are not, feature_array - field recording which array a
+           feature is located in (features, mrnas, cdss, non_coding_features)
+           feature_idx - field keeping the position of feature in its array
+           in a Genome object, ontology_terms - mapping from term ID (key) to
+           term name (value).) -> structure: parameter "feature_id" of
+           String, parameter "aliases" of mapping from String to list of
+           String, parameter "function" of String, parameter "location" of
+           list of type "Location" -> structure: parameter "contig_id" of
+           String, parameter "start" of Long, parameter "strand" of String,
+           parameter "length" of Long, parameter "feature_type" of String,
+           parameter "global_location" of type "Location" -> structure:
+           parameter "contig_id" of String, parameter "start" of Long,
+           parameter "strand" of String, parameter "length" of Long,
+           parameter "feature_array" of String, parameter "feature_idx" of
+           Long, parameter "ontology_terms" of mapping from String to String,
+           parameter "num_found" of Long
+        """
+        # ctx is the context object
+        # return variables are: result
+        #BEGIN search
+        result = self.msu.search(ctx['token'], params.get('ref'), params.get('start'),
+                                 params.get('limit'), params.get('sort_by'))
+        #END search
+
+        # At some point might do deeper type checking...
+        if not isinstance(result, dict):
+            raise ValueError('Method search return value ' +
+                             'result is not type dict as required.')
+        # return the results
+        return [result]
+
+    def search_region(self, ctx, params):
+        """
+        :param params: instance of type "SearchRegionOptions" -> structure:
+           parameter "ref" of String, parameter "contig_id" of String,
+           parameter "region_start" of Long, parameter "region_length" of
+           Long, parameter "page_start" of Long, parameter "page_limit" of
+           Long
+        :returns: instance of type "SearchRegionResult" -> structure:
+           parameter "contig_id" of String, parameter "region_start" of Long,
+           parameter "region_length" of Long, parameter "page_start" of Long,
+           parameter "features" of list of type "FeatureData" (aliases -
+           mapping from alias name (key) to set of alias sources (value),
+           global_location - this is location-related properties that are
+           under sorting whereas items in "location" array are not,
+           feature_array - field recording which array a feature is located
+           in (features, mrnas, cdss, non_coding_features) feature_idx -
+           field keeping the position of feature in its array in a Genome
+           object, ontology_terms - mapping from term ID (key) to term name
+           (value).) -> structure: parameter "feature_id" of String,
+           parameter "aliases" of mapping from String to list of String,
+           parameter "function" of String, parameter "location" of list of
+           type "Location" -> structure: parameter "contig_id" of String,
+           parameter "start" of Long, parameter "strand" of String, parameter
+           "length" of Long, parameter "feature_type" of String, parameter
+           "global_location" of type "Location" -> structure: parameter
+           "contig_id" of String, parameter "start" of Long, parameter
+           "strand" of String, parameter "length" of Long, parameter
+           "feature_array" of String, parameter "feature_idx" of Long,
+           parameter "ontology_terms" of mapping from String to String,
+           parameter "num_found" of Long
+        """
+        # ctx is the context object
+        # return variables are: result
+        #BEGIN search_region
+        result = self.msu.search_region(ctx["token"],
+                                        params.get("ref", None),
+                                        params.get("contig_id", None),
+                                        params.get("region_start", None),
+                                        params.get("region_length", None),
+                                        params.get("page_start", None),
+                                        params.get("page_limit", None),
+                                        params.get("sort_by", None))
+        #END search_region
+
+        # At some point might do deeper type checking...
+        if not isinstance(result, dict):
+            raise ValueError('Method search_region return value ' +
+                             'result is not type dict as required.')
+        # return the results
+        return [result]
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",

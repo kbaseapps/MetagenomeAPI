@@ -122,4 +122,103 @@ module MetagenomeAPI {
     funcdef get_annotated_metagenome_assembly(getAnnotatedMetagenomeAssemblyParams params)
         returns (getAnnotatedMetagenomeAssemblyOutput output) authentication required;
 
+    /*
+        ref: `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object reference
+        sort_by: list of tuples by which to sort by, ex: [("elasticsearch ", ascend bool), ...]
+        start: integer start of pagination
+        limit: integer end of pagination
+    */
+
+    typedef structure {
+        string ref;
+        list<column_sorting> sort_by;
+        int start;
+        int limit;
+    } SearchOptions;
+
+    typedef structure {
+        string contig_id;
+        int start;
+        string strand;
+        int length;
+    } Location;
+
+    /*
+        aliases - mapping from alias name (key) to set of alias sources (value)
+        global_location - this is location-related properties that are
+            under sorting whereas items in "location" array are not,
+        feature_array - field recording which array a feature is located in
+            (features, mrnas, cdss, non_coding_features)
+        feature_idx - field keeping the position of feature in its array in a
+            Genome object,
+        ontology_terms - mapping from term ID (key) to term name (value).
+    */
+
+    typedef structure {
+        string feature_id;
+        mapping<string, list<string>> aliases;
+        string function;
+        list<Location> location;
+        string feature_type;
+        Location global_location;
+        string feature_array;
+        int feature_idx;
+        mapping<string, string> ontology_terms;
+    } FeatureData;
+
+    /*
+        num_found - number of all items found in query search (with only part of it returned in "features" list).
+        query: the query used on the Search2API
+        start: integer index start of pagination
+        features: list of feature information.
+    */
+
+    typedef structure {
+        string query;
+        int start;
+        list<FeatureData> features;
+        int num_found;
+    } SearchResult;
+
+    funcdef search(SearchOptions params) returns (SearchResult result) authentication optional;
+
+    /*
+        ref: `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object reference
+        contig_id: id of contig to search around.
+        region_start: integer start of contig context to search around.
+        region_length: integer lenght of contig context to search around.
+        page_start: integer start of pagination
+        page_limit: integer end of pagination
+        sort_by: list of tuples by which to sort by, ex: [("elasticsearch ", ascend bool), ...]
+    */
+
+    typedef structure {
+        string ref;
+        string contig_id;
+        int region_start;
+        int region_length;
+        int page_start;
+        int page_limit;
+        list<column_sorting> sort_by;
+    } SearchRegionOptions;
+
+    /*
+        contig_id: id of contig to search around, (same as input).
+        region_start: integer start of contig context to search around, (same as input).
+        region_length: integer lenght of contig context to search around, (same as input).
+        start: integer start of pagination
+        features: list of feature information.
+        num_found: the total number of matches with the query (without pagination)
+    */
+
+    typedef structure {
+        string contig_id;
+        int region_start;
+        int region_length;
+        int start;
+        list<FeatureData> features;
+        int num_found;
+    } SearchRegionResult;
+
+    funcdef search_region(SearchRegionOptions params) returns (SearchRegionResult result) authentication required;
 };

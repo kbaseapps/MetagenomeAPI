@@ -12,8 +12,10 @@ try:
 except:
     from configparser import ConfigParser  # py3
 
-from pprint import pprint
-
+# from pprint import pprint
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+_DIR = os.path.dirname(os.path.realpath(__file__))
 
 from MetagenomeUtils.MetagenomeUtilsClient import MetagenomeUtils
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
@@ -133,7 +135,10 @@ class MetagenomeAPITest(unittest.TestCase):
         json_file = "data/test_metagenome_object.json"
         with open(json_file) as f:
             data = json.load(f)
-        data['assembly_ref'] = "22385/57/1"
+        if 'appdev' in self.wsURL:
+            data['assembly_ref'] = "22385/57/1"
+        if 'ci' in self.wsURL:
+            data['assembly_ref'] = "43655/43/1"
         obj_info = self.dfu.save_objects({
             'id': self.getWsID(),
             "objects": [{
@@ -144,7 +149,60 @@ class MetagenomeAPITest(unittest.TestCase):
         })[0]
         return '/'.join([str(obj_info[6]), str(obj_info[0]), str(obj_info[4])])
 
+    # @unittest.skip('x')
+    def test_region_search(self):
+        """
+        """
+        self.maxDiff=None
+        ref = "43655/58/1"
+        params = {
+            "ref": ref,
+            "contig_id": "1235",
+            "region_start": 20000,
+            "region_length": 20000,
+            "page_start": 0,
+            "page_limit": 100,
+            "sort_by": [("starts", 1), ('stops', 1)]
+        }
+        ret = self.getImpl().search_region(self.getContext(), params)[0]
+        self.assertTrue('contig_id' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('region_length' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('features' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('region_start' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('num_found' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('start' in ret, msg=f"returned: {ret.keys()}")
+        compare_path = os.path.join(_DIR, "data", "search_region_test_resp_ci_43655_58_1.json")
+        with open(compare_path) as f:
+            compare = json.load(f)
+        self.assertEqual(ret, compare)
+
+    # @unittest.skip('x')
+    def test_search(self):
+        """
+
+        NOTE: This test is tied to a version of workspace object in elasticsearch.
+        """
+        self.maxDiff=None
+        ref = "43655/58/1"
+        params = {
+            'ref': ref, #  reference to an AnnotatedMetagenomeAssembly object
+            'sort_by': [('id', 1)],
+            'start': 0,
+            'limit': 10
+        }
+        ret = self.getImpl().search(self.getContext(), params)[0]
+        self.assertTrue('features' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('start' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('num_found' in ret, msg=f"returned: {ret.keys()}")
+        self.assertTrue('query' in ret, msg=f"returned: {ret.keys()}")
+        compare_path = os.path.join(_DIR, "data", "search_test_resp_ci_43655_58_1.json")
+        with open(compare_path) as f:
+            compare = json.load(f)
+        self.assertEqual(ret, compare)
+
+    # @unittest.skip('x')
     def test_get_annotated_metagenome_assembly(self):
+        """"""
         appdev_ref = self.save_metagenome()
         incl = [
             'dna_size',
@@ -163,12 +221,13 @@ class MetagenomeAPITest(unittest.TestCase):
         ret = self.getImpl().get_annotated_metagenome_assembly(self.getContext(), params)[0]
         self.check_ret(ret, incl)
 
+    # @unittest.skip('x')
     def test_search_binned_contigs(self):
 
         # no query
         search_params = {'ref': self.binnedcontigs_ref_1}
         ret = self.getImpl().search_binned_contigs(self.getContext(), search_params)[0]
-        pprint(ret)
+        # pprint(ret)
         self.assertEquals(ret['num_found'], 3)
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['start'], 0)
@@ -225,13 +284,13 @@ class MetagenomeAPITest(unittest.TestCase):
 
         # todo: sort by other stuff
 
-
+    # @unittest.skip('x')
     def test_search_contigs_in_bin(self):
 
         # no query
         search_params = {'ref': self.binnedcontigs_ref_1, 'bin_id': 'out_header.002.fasta', 'limit': 5}
         ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
-        pprint(ret)
+        # pprint(ret)
         self.assertEquals(ret['num_found'], 369)
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['bin_id'], 'out_header.002.fasta')
