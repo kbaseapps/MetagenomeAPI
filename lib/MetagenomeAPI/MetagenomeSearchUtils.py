@@ -18,6 +18,7 @@ class MetagenomeSearchUtils:
 
     def search_contig(self, token, ref, contig_id, contig_length, start, limit):
         """
+        Given a contig, find the number of features it has
         token         - workspace authentication token
         ref           - workspace object reference
         contig_id     - contig id of contig to query around
@@ -37,6 +38,7 @@ class MetagenomeSearchUtils:
 
     def search_region(self, token, ref, contig_id, region_start, region_length, start, limit):
         """
+        Search a region of features in a given contig
         token         - workspace authentication token
         ref           - workspace object reference
         contig_id     - contig id of contig to query around
@@ -78,12 +80,13 @@ class MetagenomeSearchUtils:
 
     def search(self, token, ref, start, limit, sort_by, query):
         """
+        Search features against one Annotated Metagenome Assembly, with or without a query string.
         token   - workspace authentication token
         ref     - workspace object reference
         start   - elasticsearch page start delimiter
         limit   - elasticsearch page limit
         sort_by - list of tuples of (field to sort by, ascending bool) for elasticsearch
-        query - text to prefix search on all fields.
+        query   - text to prefix search on all fields.
         """
         if start is None:
             start = 0
@@ -110,7 +113,15 @@ class MetagenomeSearchUtils:
         return ret
 
     def _elastic_query(self, token, ref, limit, start, sort_by, extra_must=[]):
-        """"""
+        """
+        Perform the query against the Search API 2, to get results from elasticsearch.
+        token      - workspace authentication token
+        ref        - workspace object reference
+        limit      - elasticsearch page limit
+        start      - elasticsearch page start delimiter
+        sort_by    - list of tuples of (field to sort by, ascending bool) for elasticsearch
+        extra_must - list of additional elasticsearch eql json blobs to include as query
+        """
         (workspace_id, object_id, version) = ref.split('/')
         # we use namespace 'WSVER' for versioned elasticsearch index.
         ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
@@ -140,7 +151,12 @@ class MetagenomeSearchUtils:
         return self._process_resp(respj, start, params)
 
     def _process_resp(self, resp, start, params):
-        """"""
+        """
+        Format the response
+        resp   - json response from search api
+        start  - integer start of pagination
+        params - parameters used to search against SearchAPI2
+        """
         if resp.get('hits') and resp['hits'].get('hits'):
             hits = resp['hits']['hits']
             return {
@@ -153,7 +169,10 @@ class MetagenomeSearchUtils:
             raise RuntimeError(f"no 'hits' with params {json.dumps(params)}\n in http response: {resp}")
 
     def _process_feature(self, hit_source):
-        """"""
+        """
+        Format individual features.
+        hit_source - the '_source' fields of the elasticsearch response body of a feature.
+        """
         starts = hit_source.get('starts')
         stops = hit_source.get('stops')
         contig_ids = hit_source.get('contig_ids')
@@ -185,4 +204,3 @@ class MetagenomeSearchUtils:
             "function": functions,
             "ontology_terms": {}
         }
-

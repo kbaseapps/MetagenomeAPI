@@ -156,7 +156,8 @@ class MetagenomeAPITest(unittest.TestCase):
 
     # @unittest.skip('x')
     def test_search_contigs(self):
-        """
+        """test the 'search_contigs' function
+        NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         self.maxDiff=None
         ref = "43655/58/1"
@@ -189,7 +190,8 @@ class MetagenomeAPITest(unittest.TestCase):
 
     @unittest.skip('x')
     def test_region_search(self):
-        """
+        """test the 'search_region' function
+        NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         self.maxDiff=None
         ref = "43655/58/1"
@@ -217,7 +219,9 @@ class MetagenomeAPITest(unittest.TestCase):
 
     @unittest.skip('x')
     def test_search_query(self):
-        """"""
+        """test the 'search' function, using a query string.
+        NOTE: This test is tied to a version of workspace object in elasticsearch.
+        """
         self.maxDiff = None
         ref = "43655/58/1"
         params = {
@@ -233,8 +237,7 @@ class MetagenomeAPITest(unittest.TestCase):
 
     @unittest.skip('x')
     def test_search(self):
-        """
-
+        """test the 'search' function
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         self.maxDiff=None
@@ -257,7 +260,7 @@ class MetagenomeAPITest(unittest.TestCase):
 
     @unittest.skip('x')
     def test_get_annotated_metagenome_assembly(self):
-        """"""
+        """test the 'get_annotated_metagenome_assembly' function"""
         appdev_ref = self.save_metagenome()
         incl = [
             'dna_size',
