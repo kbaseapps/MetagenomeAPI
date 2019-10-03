@@ -315,7 +315,7 @@ class MetagenomeAPI:
         contig_ids = data['contig_ids']
         contig_lengths = data['contig_lengths']
 
-        if sort_by[0] == 'contig_id' and not sort_by[1]:
+        if sort_by[0] == 'contig_id' and sort_by[1] == 0:
           contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
         elif sort_by[0] == 'length':
           contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
@@ -326,12 +326,16 @@ class MetagenomeAPI:
           if i < len(contig_ids) or i >= 0:
             contig_id = contig_ids[i]
             contig_length = contig_lengths[i]
-            contig_data = self.msu.search_contig(ctx["token"],
+            feature_count = self.msu.search_contig_feature_count(ctx["token"],
                                           params.get("ref"),
                                           contig_id,
-                                          contig_length,
                                           params.get("start"),
                                           params.get("limit"))
+            contig_data = {
+              "contig_id": contig_id,
+              "feature_count": feature_count,
+              "length": contig_length
+            }
             contigs.append(contig_data)
         # not ideal, but will work for now...
         if sort_by[0] == 'feature_count':

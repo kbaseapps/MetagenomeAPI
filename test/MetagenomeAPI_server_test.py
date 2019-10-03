@@ -83,8 +83,6 @@ class MetagenomeAPITest(unittest.TestCase):
             'workspace_name': cls.wsName,
             'assembly_name': 'MyAssembly'
         }
-        print('+'*80)
-        print(os.path.isfile(cls.assembly_fasta_file_path))
         cls.assembly_ref_1 = cls.au.save_assembly_from_fasta(assembly_params)
         print('Assembly1:' + cls.assembly_ref_1)
 
@@ -92,7 +90,6 @@ class MetagenomeAPITest(unittest.TestCase):
         test_directory_name = 'test_maxbindata'
         cls.test_directory_path = os.path.join(cls.scratch, test_directory_name)
         os.makedirs(cls.test_directory_path)
-        print('hambone≠='*8)
         print(os.listdir(cls.test_directory_path))
         for item in os.listdir(os.path.join("data", "MaxBin_Result_Sample")):
             shutil.copy(os.path.join("data", "MaxBin_Result_Sample", item),

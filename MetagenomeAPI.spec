@@ -55,9 +55,6 @@ module MetagenomeAPI {
     funcdef search_binned_contigs(SearchBinnedContigsOptions params) 
         returns (SearchBinnedContigsResult result) authentication optional;
 
-
-
-
     /*
         num_found - optional field which when set informs that there
             is no need to perform full scan in order to count this
@@ -123,7 +120,7 @@ module MetagenomeAPI {
         returns (getAnnotatedMetagenomeAssemblyOutput output) authentication required;
 
     /*
-        query: 
+        query: user provided input string to prefix search against 'functions', 'functional_descriptions', 'id', and 'type' fields of the metagenome features.
         ref: `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object reference
         sort_by: list of tuples by which to sort by, ex: [("elasticsearch ", ascend bool), ...]
         start: integer start of pagination
@@ -224,6 +221,13 @@ module MetagenomeAPI {
 
     funcdef search_region(SearchRegionOptions params) returns (SearchRegionResult result) authentication required;
 
+    /*
+        ref - `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object reference
+        start - integer start of pagination 
+        limit - integer limit of pagination
+        sort_by - tuple by which to sort by and string component must be one of ("length/contig_id/feature_count", ascend bool) 
+    */
+
     typedef structure {
         string ref;
         int start;
@@ -231,11 +235,23 @@ module MetagenomeAPI {
         column_sorting sort_by;
     } SearchContigsOptions;
 
+    /*
+        contig_id - identifier of contig
+        feature_count - number of features associated with contig
+        length - the dna sequence length of the contig
+    */
+
     typedef structure {
         string contig_id;
         int feature_count;
         int length;
     } contig;
+
+    /*
+        num_found - number of contigs found in total,
+        start - start of the pagination
+        contigs - list of contig individual contig information
+    */
 
     typedef structure {
         int num_found;

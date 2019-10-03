@@ -16,25 +16,19 @@ class MetagenomeSearchUtils:
         self.debug = config.get("debug") == "1"
         self.max_sort_mem_size = 250000
 
-    def search_contig(self, token, ref, contig_id, contig_length, start, limit):
+    def search_contig_feature_count(self, token, ref, contig_id, start, limit):
         """
         Given a contig, find the number of features it has
         token         - workspace authentication token
         ref           - workspace object reference
         contig_id     - contig id of contig to query around
-        region_start  - integer position of the start of the region to search for
-        region_length - integer lenght of the region to search for
         start         - elasticsearch page start delimeter
         limit         - elasticserch page limit
         """
         extra_must = [{'term': {'contig_ids': contig_id}}]
         ret = self._elastic_query(token, ref, limit, start, [('id', 1)], extra_must=extra_must)
-        contig_data = {
-            "contig_id": contig_id, 
-            "feature_count": ret['num_found'],
-            "length": contig_length,
-        }
-        return contig_data
+        # this will correspond to 'feature_count'
+        return ret['num_found']
 
     def search_region(self, token, ref, contig_id, region_start, region_length, start, limit, sort_by):
         """
@@ -97,8 +91,7 @@ class MetagenomeSearchUtils:
 
         extra_must = []
         if query:
-            # fields = ["functions", "functional_descriptions", "id", "type"]
-            fields = ["functions", "id", "type"]
+            fields = ["functions", "functional_descriptions", "id", "type"]
             shoulds = []
             for field in fields:
                 shoulds.append({
