@@ -26,6 +26,7 @@ from MetagenomeAPI.MetagenomeAPIServer import MethodContext
 from MetagenomeAPI.authclient import KBaseAuth as _KBaseAuth
 from installed_clients.DataFileUtilClient import DataFileUtil
 
+
 class MetagenomeAPITest(unittest.TestCase):
 
     @classmethod
@@ -73,32 +74,36 @@ class MetagenomeAPITest(unittest.TestCase):
         cls.dfu = DataFileUtil(cls.callback_url)
 
         # building Assembly
-        assembly_filename = 'small_bin_contig_file.fasta'
-        cls.assembly_fasta_file_path = os.path.join(cls.scratch, assembly_filename)
-        shutil.copy(os.path.join("data", assembly_filename), cls.assembly_fasta_file_path)
+        # assembly_filename = 'small_bin_contig_file.fasta'
+        # cls.assembly_fasta_file_path = os.path.join(cls.scratch, assembly_filename)
+        # shutil.copy(os.path.join("data", assembly_filename), cls.assembly_fasta_file_path)
 
-        assembly_params = {
-            'file': {'path': cls.assembly_fasta_file_path},
-            'workspace_name': cls.wsName,
-            'assembly_name': 'MyAssembly'
-        }
-        cls.assembly_ref_1 = cls.au.save_assembly_from_fasta(assembly_params)
-        print('Assembly1:' + cls.assembly_ref_1)
+        # assembly_params = {
+        #     'file': {'path': cls.assembly_fasta_file_path},
+        #     'workspace_name': cls.wsName,
+        #     'assembly_name': 'MyAssembly'
+        # }
+        # print('+'*80)
+        # print(os.path.isfile(cls.assembly_fasta_file_path))
+        # cls.assembly_ref_1 = cls.au.save_assembly_from_fasta(assembly_params)
+        # print('Assembly1:' + cls.assembly_ref_1)
 
-        # stage and build BinnedContigs data
-        test_directory_name = 'test_maxbindata'
-        cls.test_directory_path = os.path.join(cls.scratch, test_directory_name)
-        os.makedirs(cls.test_directory_path)
-        for item in os.listdir(os.path.join("data", "MaxBin_Result_Sample")):
-            shutil.copy(os.path.join("data", "MaxBin_Result_Sample", item),
-                        os.path.join(cls.test_directory_path, item))
+        # # stage and build BinnedContigs data
+        # test_directory_name = 'test_maxbindata'
+        # cls.test_directory_path = os.path.join(cls.scratch, test_directory_name)
+        # os.makedirs(cls.test_directory_path)
+        # print('hambone≠='*8)
+        # print(os.listdir(cls.test_directory_path))
+        # for item in os.listdir(os.path.join("data", "MaxBin_Result_Sample")):
+        #     shutil.copy(os.path.join("data", "MaxBin_Result_Sample", item),
+        #                 os.path.join(cls.test_directory_path, item))
 
-        cls.binnedcontigs_ref_1 = cls.mu.file_to_binned_contigs({'file_directory': cls.test_directory_path,
-                                                                 'assembly_ref': cls.assembly_ref_1,
-                                                                 'binned_contig_name': 'MyBins',
-                                                                 'workspace_name': cls.wsName
-                                                                 })['binned_contig_obj_ref']
-        print('BinnedContigs1:' + cls.binnedcontigs_ref_1)
+        # cls.binnedcontigs_ref_1 = cls.mu.file_to_binned_contigs({'file_directory': cls.test_directory_path,
+        #                                                          'assembly_ref': cls.assembly_ref_1,
+        #                                                          'binned_contig_name': 'MyBins',
+        #                                                          'workspace_name': cls.wsName
+        #                                                          })['binned_contig_obj_ref']
+        # print('BinnedContigs1:' + cls.binnedcontigs_ref_1)
 
     @classmethod
     def tearDownClass(cls):
@@ -150,6 +155,39 @@ class MetagenomeAPITest(unittest.TestCase):
         return '/'.join([str(obj_info[6]), str(obj_info[0]), str(obj_info[4])])
 
     # @unittest.skip('x')
+    def test_search_contigs(self):
+        """
+        """
+        self.maxDiff=None
+        ref = "43655/58/1"
+        params = {
+            "ref": ref,
+            "start": 0,
+            "limit": 10,
+            "sort_by": ("length", 1)
+        }
+        ret = self.getImpl().search_contigs(self.getContext(), params)[0]
+        self.assertTrue('contigs' in ret)
+        self.assertTrue('start' in ret)
+        self.assertTrue('num_found' in ret)
+        self.assertEquals(len(ret['contigs']), 10)
+        self.assertEquals([c['length'] for c in ret['contigs']],
+                          sorted([c['length'] for c in ret['contigs']], reverse=True))
+        params = {
+            "ref": ref,
+            "start": 0,
+            "limit": 10,
+            "sort_by": ("contig_id", 1)
+        }
+        ret = self.getImpl().search_contigs(self.getContext(), params)[0]
+        self.assertTrue('contigs' in ret)
+        self.assertTrue('start' in ret)
+        self.assertTrue('num_found' in ret)
+        self.assertEquals(len(ret['contigs']), 10)
+        self.assertEquals([c['contig_id'] for c in ret['contigs']],
+                          sorted([c['contig_id'] for c in ret['contigs']]))
+
+    @unittest.skip('x')
     def test_region_search(self):
         """
         """
@@ -157,7 +195,7 @@ class MetagenomeAPITest(unittest.TestCase):
         ref = "43655/58/1"
         params = {
             "ref": ref,
-            "contig_id": "1235",
+            "contig_id": "Ga0065724_100164",
             "region_start": 20000,
             "region_length": 20000,
             "page_start": 0,
@@ -165,6 +203,7 @@ class MetagenomeAPITest(unittest.TestCase):
             "sort_by": [("starts", 1), ('stops', 1)]
         }
         ret = self.getImpl().search_region(self.getContext(), params)[0]
+        # print(json.dumps(ret, indent=2))
         self.assertTrue('contig_id' in ret, msg=f"returned: {ret.keys()}")
         self.assertTrue('region_length' in ret, msg=f"returned: {ret.keys()}")
         self.assertTrue('features' in ret, msg=f"returned: {ret.keys()}")
@@ -176,7 +215,23 @@ class MetagenomeAPITest(unittest.TestCase):
             compare = json.load(f)
         self.assertEqual(ret, compare)
 
-    # @unittest.skip('x')
+    @unittest.skip('x')
+    def test_search_query(self):
+        """"""
+        self.maxDiff = None
+        ref = "43655/58/1"
+        params = {
+            'ref': ref, #  reference to an AnnotatedMetagenomeAssembly object
+            'sort_by': [('id', 1)],
+            'start': 0,
+            'limit': 10,
+            'query': "16S"
+        }
+        ret = self.getImpl().search(self.getContext(), params)[0]
+        self.assertEqual(len(ret['features']), 10)
+        self.assertEqual(['16S rRNA. Bacterial SSU']*10, [r['function'] for r in ret['features']])
+
+    @unittest.skip('x')
     def test_search(self):
         """
 
@@ -200,7 +255,7 @@ class MetagenomeAPITest(unittest.TestCase):
             compare = json.load(f)
         self.assertEqual(ret, compare)
 
-    # @unittest.skip('x')
+    @unittest.skip('x')
     def test_get_annotated_metagenome_assembly(self):
         """"""
         appdev_ref = self.save_metagenome()
@@ -221,7 +276,7 @@ class MetagenomeAPITest(unittest.TestCase):
         ret = self.getImpl().get_annotated_metagenome_assembly(self.getContext(), params)[0]
         self.check_ret(ret, incl)
 
-    # @unittest.skip('x')
+    @unittest.skip('x')
     def test_search_binned_contigs(self):
 
         # no query
@@ -284,7 +339,7 @@ class MetagenomeAPITest(unittest.TestCase):
 
         # todo: sort by other stuff
 
-    # @unittest.skip('x')
+    @unittest.skip('x')
     def test_search_contigs_in_bin(self):
 
         # no query

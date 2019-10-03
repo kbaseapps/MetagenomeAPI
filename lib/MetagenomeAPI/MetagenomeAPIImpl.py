@@ -23,9 +23,9 @@ class MetagenomeAPI:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "1.0.1"
+    VERSION = "1.0.2"
     GIT_URL = "https://github.com/slebras/MetagenomeAPI.git"
-    GIT_COMMIT_HASH = "4063f58d6a6fd445a294f38988a42be14818884a"
+    GIT_COMMIT_HASH = "cec795241d450e7ef29bef179bdc93e05cfde90e"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
@@ -158,18 +158,24 @@ class MetagenomeAPI:
 
     def search(self, ctx, params):
         """
-        :param params: instance of type "SearchOptions" -> structure:
-           parameter "ref" of String, parameter "sort_by" of list of type
-           "column_sorting" -> tuple of size 2: parameter "column" of String,
-           parameter "ascending" of type "boolean" (Indicates true or false
-           values, false = 0, true = 1 @range [0,1]), parameter "start" of
-           Long, parameter "limit" of Long
+        :param params: instance of type "SearchOptions" (query: ref:
+           `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object
+           reference sort_by: list of tuples by which to sort by, ex:
+           [("elasticsearch ", ascend bool), ...] start: integer start of
+           pagination limit: integer end of pagination) -> structure:
+           parameter "query" of String, parameter "ref" of String, parameter
+           "sort_by" of list of type "column_sorting" -> tuple of size 2:
+           parameter "column" of String, parameter "ascending" of type
+           "boolean" (Indicates true or false values, false = 0, true = 1
+           @range [0,1]), parameter "start" of Long, parameter "limit" of Long
         :returns: instance of type "SearchResult" (num_found - number of all
            items found in query search (with only part of it returned in
-           "features" list).) -> structure: parameter "query" of String,
-           parameter "start" of Long, parameter "features" of list of type
+           "features" list). query: the query used on the Search2API start:
+           integer index start of pagination features: list of feature
+           information.) -> structure: parameter "query" of String, parameter
+           "start" of Long, parameter "features" of list of type
            "FeatureData" (aliases - mapping from alias name (key) to set of
-           alias sources (value), global_location - this is location-related
+           alias sources (value) global_location - this is location-related
            properties that are under sorting whereas items in "location"
            array are not, feature_array - field recording which array a
            feature is located in (features, mrnas, cdss, non_coding_features)
@@ -192,7 +198,7 @@ class MetagenomeAPI:
         # return variables are: result
         #BEGIN search
         result = self.msu.search(ctx['token'], params.get('ref'), params.get('start'),
-                                 params.get('limit'), params.get('sort_by'))
+                                 params.get('limit'), params.get('sort_by'), params.get('query'))
         #END search
 
         # At some point might do deeper type checking...
@@ -204,34 +210,48 @@ class MetagenomeAPI:
 
     def search_region(self, ctx, params):
         """
-        :param params: instance of type "SearchRegionOptions" -> structure:
-           parameter "ref" of String, parameter "contig_id" of String,
-           parameter "region_start" of Long, parameter "region_length" of
-           Long, parameter "page_start" of Long, parameter "page_limit" of
-           Long
-        :returns: instance of type "SearchRegionResult" -> structure:
+        :param params: instance of type "SearchRegionOptions" (ref:
+           `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object
+           reference contig_id: id of contig to search around. region_start:
+           integer start of contig context to search around. region_length:
+           integer lenght of contig context to search around. page_start:
+           integer start of pagination page_limit: integer end of pagination
+           sort_by: list of tuples by which to sort by, ex: [("elasticsearch
+           ", ascend bool), ...]) -> structure: parameter "ref" of String,
            parameter "contig_id" of String, parameter "region_start" of Long,
            parameter "region_length" of Long, parameter "page_start" of Long,
-           parameter "features" of list of type "FeatureData" (aliases -
-           mapping from alias name (key) to set of alias sources (value),
-           global_location - this is location-related properties that are
-           under sorting whereas items in "location" array are not,
-           feature_array - field recording which array a feature is located
-           in (features, mrnas, cdss, non_coding_features) feature_idx -
-           field keeping the position of feature in its array in a Genome
-           object, ontology_terms - mapping from term ID (key) to term name
-           (value).) -> structure: parameter "feature_id" of String,
-           parameter "aliases" of mapping from String to list of String,
-           parameter "function" of String, parameter "location" of list of
-           type "Location" -> structure: parameter "contig_id" of String,
-           parameter "start" of Long, parameter "strand" of String, parameter
-           "length" of Long, parameter "feature_type" of String, parameter
-           "global_location" of type "Location" -> structure: parameter
+           parameter "page_limit" of Long, parameter "sort_by" of list of
+           type "column_sorting" -> tuple of size 2: parameter "column" of
+           String, parameter "ascending" of type "boolean" (Indicates true or
+           false values, false = 0, true = 1 @range [0,1])
+        :returns: instance of type "SearchRegionResult" (contig_id: id of
+           contig to search around, (same as input). region_start: integer
+           start of contig context to search around, (same as input).
+           region_length: integer lenght of contig context to search around,
+           (same as input). start: integer start of pagination features: list
+           of feature information. num_found: the total number of matches
+           with the query (without pagination)) -> structure: parameter
+           "contig_id" of String, parameter "region_start" of Long, parameter
+           "region_length" of Long, parameter "start" of Long, parameter
+           "features" of list of type "FeatureData" (aliases - mapping from
+           alias name (key) to set of alias sources (value) global_location -
+           this is location-related properties that are under sorting whereas
+           items in "location" array are not, feature_array - field recording
+           which array a feature is located in (features, mrnas, cdss,
+           non_coding_features) feature_idx - field keeping the position of
+           feature in its array in a Genome object, ontology_terms - mapping
+           from term ID (key) to term name (value).) -> structure: parameter
+           "feature_id" of String, parameter "aliases" of mapping from String
+           to list of String, parameter "function" of String, parameter
+           "location" of list of type "Location" -> structure: parameter
            "contig_id" of String, parameter "start" of Long, parameter
            "strand" of String, parameter "length" of Long, parameter
-           "feature_array" of String, parameter "feature_idx" of Long,
-           parameter "ontology_terms" of mapping from String to String,
-           parameter "num_found" of Long
+           "feature_type" of String, parameter "global_location" of type
+           "Location" -> structure: parameter "contig_id" of String,
+           parameter "start" of Long, parameter "strand" of String, parameter
+           "length" of Long, parameter "feature_array" of String, parameter
+           "feature_idx" of Long, parameter "ontology_terms" of mapping from
+           String to String, parameter "num_found" of Long
         """
         # ctx is the context object
         # return variables are: result
@@ -252,6 +272,85 @@ class MetagenomeAPI:
                              'result is not type dict as required.')
         # return the results
         return [result]
+
+    def search_contigs(self, ctx, params):
+        """
+        :param params: instance of type "SearchContigsOptions" -> structure:
+           parameter "ref" of String, parameter "start" of Long, parameter
+           "limit" of Long, parameter "sort_by" of list of type
+           "column_sorting" -> tuple of size 2: parameter "column" of String,
+           parameter "ascending" of type "boolean" (Indicates true or false
+           values, false = 0, true = 1 @range [0,1])
+        :returns: instance of type "SearchContigsResult" -> structure:
+           parameter "num_found" of Long, parameter "start" of Long,
+           parameter "contigs" of list of type "contig" -> structure:
+           parameter "contig_id" of String, parameter "feature_count" of
+           Long, parameter "length" of Long
+        """
+        # ctx is the context object
+        # return variables are: result
+        #BEGIN search_contigs
+        if 'ref' not in params:
+          raise RuntimeError(f"'ref' argument required for search_contigs")
+        if 'limit' not in params:
+          raise RuntimeError(f"'limit' argument required for search_contigs")
+        if 'start' not in params:
+          raise RuntimeError(f"'start' argument required for search_contigs")
+        if not params.get('sort_by'):
+          sort_by = ('length', 0)
+        else:
+          sort_by = params['sort_by']
+          if sort_by[0] not in ['length', 'contig_id', 'feature_count']:
+            raise RuntimeError("'sort_by' argument can only contain one "
+                               "of 'length', 'contig_id', or 'feature_count'")
+
+        ws = Workspace(self.config['workspace-url'], token=ctx['token'])
+        ama_utils = AMAUtils(ws)
+        params['included_fields'] = ['contig_ids', 'contig_lengths']
+        ama = ama_utils.get_annotated_metagenome_assembly(params)['genomes'][0]
+        data = ama['data']
+        if len(data['contig_ids']) != len(data['contig_lengths']):
+          raise RuntimeError(f"contig ids (size: {len(data['contig_ids'])}) and contig "
+                             f"lengths (size: {len(data['contig_lengths'])}) sizes do not match.")
+        contig_ids = data['contig_ids']
+        contig_lengths = data['contig_lengths']
+
+        if sort_by[0] == 'contig_id' and not sort_by[1]:
+          contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
+        elif sort_by[0] == 'length':
+          contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
+
+        contigs = []
+        for i in range(params['start'], params['start'] + params['limit']):
+          # not a great solution, but works for now.
+          if i < len(contig_ids) or i >= 0:
+            contig_id = contig_ids[i]
+            contig_length = contig_lengths[i]
+            contig_data = self.msu.search_contig(ctx["token"],
+                                          params.get("ref"),
+                                          contig_id,
+                                          contig_length,
+                                          params.get("start"),
+                                          params.get("limit"))
+            contigs.append(contig_data)
+        # not ideal, but will work for now...
+        if sort_by[0] == 'feature_count':
+          contigs = sorted(contigs, key=lambda x: x['feature_count'], reverse=sort_by[1] == 0)
+
+        result =  {
+          "contigs": contigs,
+          "num_found": len(data['contig_ids']),
+          "start": params['start']
+        }
+        #END search_contigs
+
+        # At some point might do deeper type checking...
+        if not isinstance(result, dict):
+            raise ValueError('Method search_contigs return value ' +
+                             'result is not type dict as required.')
+        # return the results
+        return [result]
+
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",

@@ -105,18 +105,24 @@ class MetagenomeAPI(object):
 
     def search(self, params, context=None):
         """
-        :param params: instance of type "SearchOptions" -> structure:
-           parameter "ref" of String, parameter "sort_by" of list of type
-           "column_sorting" -> tuple of size 2: parameter "column" of String,
-           parameter "ascending" of type "boolean" (Indicates true or false
-           values, false = 0, true = 1 @range [0,1]), parameter "start" of
-           Long, parameter "limit" of Long
+        :param params: instance of type "SearchOptions" (query: ref:
+           `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object
+           reference sort_by: list of tuples by which to sort by, ex:
+           [("elasticsearch ", ascend bool), ...] start: integer start of
+           pagination limit: integer end of pagination) -> structure:
+           parameter "query" of String, parameter "ref" of String, parameter
+           "sort_by" of list of type "column_sorting" -> tuple of size 2:
+           parameter "column" of String, parameter "ascending" of type
+           "boolean" (Indicates true or false values, false = 0, true = 1
+           @range [0,1]), parameter "start" of Long, parameter "limit" of Long
         :returns: instance of type "SearchResult" (num_found - number of all
            items found in query search (with only part of it returned in
-           "features" list).) -> structure: parameter "query" of String,
-           parameter "start" of Long, parameter "features" of list of type
+           "features" list). query: the query used on the Search2API start:
+           integer index start of pagination features: list of feature
+           information.) -> structure: parameter "query" of String, parameter
+           "start" of Long, parameter "features" of list of type
            "FeatureData" (aliases - mapping from alias name (key) to set of
-           alias sources (value), global_location - this is location-related
+           alias sources (value) global_location - this is location-related
            properties that are under sorting whereas items in "location"
            array are not, feature_array - field recording which array a
            feature is located in (features, mrnas, cdss, non_coding_features)
@@ -140,36 +146,67 @@ class MetagenomeAPI(object):
 
     def search_region(self, params, context=None):
         """
-        :param params: instance of type "SearchRegionOptions" -> structure:
-           parameter "ref" of String, parameter "contig_id" of String,
-           parameter "region_start" of Long, parameter "region_length" of
-           Long, parameter "page_start" of Long, parameter "page_limit" of
-           Long
-        :returns: instance of type "SearchRegionResult" -> structure:
+        :param params: instance of type "SearchRegionOptions" (ref:
+           `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object
+           reference contig_id: id of contig to search around. region_start:
+           integer start of contig context to search around. region_length:
+           integer lenght of contig context to search around. page_start:
+           integer start of pagination page_limit: integer end of pagination
+           sort_by: list of tuples by which to sort by, ex: [("elasticsearch
+           ", ascend bool), ...]) -> structure: parameter "ref" of String,
            parameter "contig_id" of String, parameter "region_start" of Long,
            parameter "region_length" of Long, parameter "page_start" of Long,
-           parameter "features" of list of type "FeatureData" (aliases -
-           mapping from alias name (key) to set of alias sources (value),
-           global_location - this is location-related properties that are
-           under sorting whereas items in "location" array are not,
-           feature_array - field recording which array a feature is located
-           in (features, mrnas, cdss, non_coding_features) feature_idx -
-           field keeping the position of feature in its array in a Genome
-           object, ontology_terms - mapping from term ID (key) to term name
-           (value).) -> structure: parameter "feature_id" of String,
-           parameter "aliases" of mapping from String to list of String,
-           parameter "function" of String, parameter "location" of list of
-           type "Location" -> structure: parameter "contig_id" of String,
-           parameter "start" of Long, parameter "strand" of String, parameter
-           "length" of Long, parameter "feature_type" of String, parameter
-           "global_location" of type "Location" -> structure: parameter
+           parameter "page_limit" of Long, parameter "sort_by" of list of
+           type "column_sorting" -> tuple of size 2: parameter "column" of
+           String, parameter "ascending" of type "boolean" (Indicates true or
+           false values, false = 0, true = 1 @range [0,1])
+        :returns: instance of type "SearchRegionResult" (contig_id: id of
+           contig to search around, (same as input). region_start: integer
+           start of contig context to search around, (same as input).
+           region_length: integer lenght of contig context to search around,
+           (same as input). start: integer start of pagination features: list
+           of feature information. num_found: the total number of matches
+           with the query (without pagination)) -> structure: parameter
+           "contig_id" of String, parameter "region_start" of Long, parameter
+           "region_length" of Long, parameter "start" of Long, parameter
+           "features" of list of type "FeatureData" (aliases - mapping from
+           alias name (key) to set of alias sources (value) global_location -
+           this is location-related properties that are under sorting whereas
+           items in "location" array are not, feature_array - field recording
+           which array a feature is located in (features, mrnas, cdss,
+           non_coding_features) feature_idx - field keeping the position of
+           feature in its array in a Genome object, ontology_terms - mapping
+           from term ID (key) to term name (value).) -> structure: parameter
+           "feature_id" of String, parameter "aliases" of mapping from String
+           to list of String, parameter "function" of String, parameter
+           "location" of list of type "Location" -> structure: parameter
            "contig_id" of String, parameter "start" of Long, parameter
            "strand" of String, parameter "length" of Long, parameter
-           "feature_array" of String, parameter "feature_idx" of Long,
-           parameter "ontology_terms" of mapping from String to String,
-           parameter "num_found" of Long
+           "feature_type" of String, parameter "global_location" of type
+           "Location" -> structure: parameter "contig_id" of String,
+           parameter "start" of Long, parameter "strand" of String, parameter
+           "length" of Long, parameter "feature_array" of String, parameter
+           "feature_idx" of Long, parameter "ontology_terms" of mapping from
+           String to String, parameter "num_found" of Long
         """
         return self._client.call_method('MetagenomeAPI.search_region',
+                                        [params], self._service_ver, context)
+
+    def search_contigs(self, params, context=None):
+        """
+        :param params: instance of type "SearchContigsOptions" -> structure:
+           parameter "ref" of String, parameter "start" of Long, parameter
+           "limit" of Long, parameter "sort_by" of list of type
+           "column_sorting" -> tuple of size 2: parameter "column" of String,
+           parameter "ascending" of type "boolean" (Indicates true or false
+           values, false = 0, true = 1 @range [0,1])
+        :returns: instance of type "SearchContigsResult" -> structure:
+           parameter "num_found" of Long, parameter "start" of Long,
+           parameter "contigs" of list of type "contig" -> structure:
+           parameter "contig_id" of String, parameter "feature_count" of
+           Long, parameter "length" of Long
+        """
+        return self._client.call_method('MetagenomeAPI.search_contigs',
                                         [params], self._service_ver, context)
 
     def status(self, context=None):

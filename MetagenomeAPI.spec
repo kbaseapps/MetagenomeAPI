@@ -123,6 +123,7 @@ module MetagenomeAPI {
         returns (getAnnotatedMetagenomeAssemblyOutput output) authentication required;
 
     /*
+        query: 
         ref: `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object reference
         sort_by: list of tuples by which to sort by, ex: [("elasticsearch ", ascend bool), ...]
         start: integer start of pagination
@@ -130,6 +131,7 @@ module MetagenomeAPI {
     */
 
     typedef structure {
+        string query;
         string ref;
         list<column_sorting> sort_by;
         int start;
@@ -221,4 +223,26 @@ module MetagenomeAPI {
     } SearchRegionResult;
 
     funcdef search_region(SearchRegionOptions params) returns (SearchRegionResult result) authentication required;
+
+    typedef structure {
+        string ref;
+        int start;
+        int limit;
+        column_sorting sort_by;
+    } SearchContigsOptions;
+
+    typedef structure {
+        string contig_id;
+        int feature_count;
+        int length;
+    } contig;
+
+    typedef structure {
+        int num_found;
+        int start;
+        list<contig> contigs;
+    } SearchContigsResult;
+
+    funcdef search_contigs(SearchContigsOptions params) returns (SearchContigsResult result) authentication required;
+
 };
