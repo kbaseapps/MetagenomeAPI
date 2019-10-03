@@ -36,7 +36,7 @@ class MetagenomeSearchUtils:
         }
         return contig_data
 
-    def search_region(self, token, ref, contig_id, region_start, region_length, start, limit):
+    def search_region(self, token, ref, contig_id, region_start, region_length, start, limit, sort_by):
         """
         Search a region of features in a given contig
         token         - workspace authentication token

@@ -74,36 +74,36 @@ class MetagenomeAPITest(unittest.TestCase):
         cls.dfu = DataFileUtil(cls.callback_url)
 
         # building Assembly
-        # assembly_filename = 'small_bin_contig_file.fasta'
-        # cls.assembly_fasta_file_path = os.path.join(cls.scratch, assembly_filename)
-        # shutil.copy(os.path.join("data", assembly_filename), cls.assembly_fasta_file_path)
+        assembly_filename = 'small_bin_contig_file.fasta'
+        cls.assembly_fasta_file_path = os.path.join(cls.scratch, assembly_filename)
+        shutil.copy(os.path.join("data", assembly_filename), cls.assembly_fasta_file_path)
 
-        # assembly_params = {
-        #     'file': {'path': cls.assembly_fasta_file_path},
-        #     'workspace_name': cls.wsName,
-        #     'assembly_name': 'MyAssembly'
-        # }
-        # print('+'*80)
-        # print(os.path.isfile(cls.assembly_fasta_file_path))
-        # cls.assembly_ref_1 = cls.au.save_assembly_from_fasta(assembly_params)
-        # print('Assembly1:' + cls.assembly_ref_1)
+        assembly_params = {
+            'file': {'path': cls.assembly_fasta_file_path},
+            'workspace_name': cls.wsName,
+            'assembly_name': 'MyAssembly'
+        }
+        print('+'*80)
+        print(os.path.isfile(cls.assembly_fasta_file_path))
+        cls.assembly_ref_1 = cls.au.save_assembly_from_fasta(assembly_params)
+        print('Assembly1:' + cls.assembly_ref_1)
 
-        # # stage and build BinnedContigs data
-        # test_directory_name = 'test_maxbindata'
-        # cls.test_directory_path = os.path.join(cls.scratch, test_directory_name)
-        # os.makedirs(cls.test_directory_path)
-        # print('hambone≠='*8)
-        # print(os.listdir(cls.test_directory_path))
-        # for item in os.listdir(os.path.join("data", "MaxBin_Result_Sample")):
-        #     shutil.copy(os.path.join("data", "MaxBin_Result_Sample", item),
-        #                 os.path.join(cls.test_directory_path, item))
+        # stage and build BinnedContigs data
+        test_directory_name = 'test_maxbindata'
+        cls.test_directory_path = os.path.join(cls.scratch, test_directory_name)
+        os.makedirs(cls.test_directory_path)
+        print('hambone≠='*8)
+        print(os.listdir(cls.test_directory_path))
+        for item in os.listdir(os.path.join("data", "MaxBin_Result_Sample")):
+            shutil.copy(os.path.join("data", "MaxBin_Result_Sample", item),
+                        os.path.join(cls.test_directory_path, item))
 
-        # cls.binnedcontigs_ref_1 = cls.mu.file_to_binned_contigs({'file_directory': cls.test_directory_path,
-        #                                                          'assembly_ref': cls.assembly_ref_1,
-        #                                                          'binned_contig_name': 'MyBins',
-        #                                                          'workspace_name': cls.wsName
-        #                                                          })['binned_contig_obj_ref']
-        # print('BinnedContigs1:' + cls.binnedcontigs_ref_1)
+        cls.binnedcontigs_ref_1 = cls.mu.file_to_binned_contigs({'file_directory': cls.test_directory_path,
+                                                                 'assembly_ref': cls.assembly_ref_1,
+                                                                 'binned_contig_name': 'MyBins',
+                                                                 'workspace_name': cls.wsName
+                                                                 })['binned_contig_obj_ref']
+        print('BinnedContigs1:' + cls.binnedcontigs_ref_1)
 
     @classmethod
     def tearDownClass(cls):
@@ -188,7 +188,7 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals([c['contig_id'] for c in ret['contigs']],
                           sorted([c['contig_id'] for c in ret['contigs']]))
 
-    @unittest.skip('x')
+    # @unittest.skip('x')
     def test_region_search(self):
         """test the 'search_region' function
         NOTE: This test is tied to a version of workspace object in elasticsearch.
@@ -217,7 +217,7 @@ class MetagenomeAPITest(unittest.TestCase):
             compare = json.load(f)
         self.assertEqual(ret, compare)
 
-    @unittest.skip('x')
+    # @unittest.skip('x')
     def test_search_query(self):
         """test the 'search' function, using a query string.
         NOTE: This test is tied to a version of workspace object in elasticsearch.
@@ -235,7 +235,7 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEqual(len(ret['features']), 10)
         self.assertEqual(['16S rRNA. Bacterial SSU']*10, [r['function'] for r in ret['features']])
 
-    @unittest.skip('x')
+    # @unittest.skip('x')
     def test_search(self):
         """test the 'search' function
         NOTE: This test is tied to a version of workspace object in elasticsearch.
@@ -258,7 +258,7 @@ class MetagenomeAPITest(unittest.TestCase):
             compare = json.load(f)
         self.assertEqual(ret, compare)
 
-    @unittest.skip('x')
+    # @unittest.skip('x')
     def test_get_annotated_metagenome_assembly(self):
         """test the 'get_annotated_metagenome_assembly' function"""
         appdev_ref = self.save_metagenome()
@@ -279,7 +279,7 @@ class MetagenomeAPITest(unittest.TestCase):
         ret = self.getImpl().get_annotated_metagenome_assembly(self.getContext(), params)[0]
         self.check_ret(ret, incl)
 
-    @unittest.skip('x')
+    # @unittest.skip('x')
     def test_search_binned_contigs(self):
 
         # no query
@@ -342,7 +342,7 @@ class MetagenomeAPITest(unittest.TestCase):
 
         # todo: sort by other stuff
 
-    @unittest.skip('x')
+    # @unittest.skip('x')
     def test_search_contigs_in_bin(self):
 
         # no query
