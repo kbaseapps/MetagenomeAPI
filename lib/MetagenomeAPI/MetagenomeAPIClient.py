@@ -105,7 +105,10 @@ class MetagenomeAPI(object):
 
     def search(self, params, context=None):
         """
-        :param params: instance of type "SearchOptions" (query: ref:
+        :param params: instance of type "SearchOptions" (query: user provided
+           input string to prefix search against 'functions',
+           'functional_descriptions', 'id', and 'type' fields of the
+           metagenome features. ref:
            `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object
            reference sort_by: list of tuples by which to sort by, ex:
            [("elasticsearch ", ascend bool), ...] start: integer start of
@@ -194,17 +197,25 @@ class MetagenomeAPI(object):
 
     def search_contigs(self, params, context=None):
         """
-        :param params: instance of type "SearchContigsOptions" -> structure:
-           parameter "ref" of String, parameter "start" of Long, parameter
-           "limit" of Long, parameter "sort_by" of list of type
+        :param params: instance of type "SearchContigsOptions" (ref -
+           `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object
+           reference start - integer start of pagination limit - integer
+           limit of pagination sort_by - tuple by which to sort by and string
+           component must be one of ("length/contig_id/feature_count", ascend
+           bool)) -> structure: parameter "ref" of String, parameter "start"
+           of Long, parameter "limit" of Long, parameter "sort_by" of type
            "column_sorting" -> tuple of size 2: parameter "column" of String,
            parameter "ascending" of type "boolean" (Indicates true or false
            values, false = 0, true = 1 @range [0,1])
-        :returns: instance of type "SearchContigsResult" -> structure:
+        :returns: instance of type "SearchContigsResult" (num_found - number
+           of contigs found in total, start - start of the pagination contigs
+           - list of contig individual contig information) -> structure:
            parameter "num_found" of Long, parameter "start" of Long,
-           parameter "contigs" of list of type "contig" -> structure:
-           parameter "contig_id" of String, parameter "feature_count" of
-           Long, parameter "length" of Long
+           parameter "contigs" of list of type "contig" (contig_id -
+           identifier of contig feature_count - number of features associated
+           with contig length - the dna sequence length of the contig) ->
+           structure: parameter "contig_id" of String, parameter
+           "feature_count" of Long, parameter "length" of Long
         """
         return self._client.call_method('MetagenomeAPI.search_contigs',
                                         [params], self._service_ver, context)

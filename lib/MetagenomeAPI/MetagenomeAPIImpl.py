@@ -23,9 +23,9 @@ class MetagenomeAPI:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "1.0.2"
+    VERSION = "1.0.3"
     GIT_URL = "https://github.com/slebras/MetagenomeAPI.git"
-    GIT_COMMIT_HASH = "cec795241d450e7ef29bef179bdc93e05cfde90e"
+    GIT_COMMIT_HASH = "6649e710497e33f86ab23e1e4e9439679bd4055b"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
@@ -158,7 +158,10 @@ class MetagenomeAPI:
 
     def search(self, ctx, params):
         """
-        :param params: instance of type "SearchOptions" (query: ref:
+        :param params: instance of type "SearchOptions" (query: user provided
+           input string to prefix search against 'functions',
+           'functional_descriptions', 'id', and 'type' fields of the
+           metagenome features. ref:
            `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object
            reference sort_by: list of tuples by which to sort by, ex:
            [("elasticsearch ", ascend bool), ...] start: integer start of
@@ -275,17 +278,25 @@ class MetagenomeAPI:
 
     def search_contigs(self, ctx, params):
         """
-        :param params: instance of type "SearchContigsOptions" -> structure:
-           parameter "ref" of String, parameter "start" of Long, parameter
-           "limit" of Long, parameter "sort_by" of list of type
+        :param params: instance of type "SearchContigsOptions" (ref -
+           `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object
+           reference start - integer start of pagination limit - integer
+           limit of pagination sort_by - tuple by which to sort by and string
+           component must be one of ("length/contig_id/feature_count", ascend
+           bool)) -> structure: parameter "ref" of String, parameter "start"
+           of Long, parameter "limit" of Long, parameter "sort_by" of type
            "column_sorting" -> tuple of size 2: parameter "column" of String,
            parameter "ascending" of type "boolean" (Indicates true or false
            values, false = 0, true = 1 @range [0,1])
-        :returns: instance of type "SearchContigsResult" -> structure:
+        :returns: instance of type "SearchContigsResult" (num_found - number
+           of contigs found in total, start - start of the pagination contigs
+           - list of contig individual contig information) -> structure:
            parameter "num_found" of Long, parameter "start" of Long,
-           parameter "contigs" of list of type "contig" -> structure:
-           parameter "contig_id" of String, parameter "feature_count" of
-           Long, parameter "length" of Long
+           parameter "contigs" of list of type "contig" (contig_id -
+           identifier of contig feature_count - number of features associated
+           with contig length - the dna sequence length of the contig) ->
+           structure: parameter "contig_id" of String, parameter
+           "feature_count" of Long, parameter "length" of Long
         """
         # ctx is the context object
         # return variables are: result
@@ -378,7 +389,6 @@ class MetagenomeAPI:
                              'result is not type dict as required.')
         # return the results
         return [result]
-
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",
