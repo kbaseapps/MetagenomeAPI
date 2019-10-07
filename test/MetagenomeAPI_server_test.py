@@ -154,6 +154,21 @@ class MetagenomeAPITest(unittest.TestCase):
         return '/'.join([str(obj_info[6]), str(obj_info[0]), str(obj_info[4])])
 
     # @unittest.skip('x')
+    def test_get_contig_info(self):
+        """
+        """
+        ref = "43655/58/1"
+        params = {
+            "ref": ref,
+            "contig_id": "Ga0065724_100164"
+        }
+        ret = self.getImpl().get_contig_info(self.getContext(), params)[0]
+        self.assertTrue('contig' in ret)
+        self.assertTrue('length' in ret['contig'])
+        self.assertTrue('contig_id' in ret['contig'])
+        self.assertTrue('feature_count' in ret['contig'])
+
+    # @unittest.skip('x')
     def test_search_contigs(self):
         """test the 'search_contigs' function
         NOTE: This test is tied to a version of workspace object in elasticsearch.

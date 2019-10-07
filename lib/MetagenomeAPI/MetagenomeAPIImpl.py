@@ -25,7 +25,7 @@ class MetagenomeAPI:
     ######################################### noqa
     VERSION = "1.0.3"
     GIT_URL = "https://github.com/slebras/MetagenomeAPI.git"
-    GIT_COMMIT_HASH = "6649e710497e33f86ab23e1e4e9439679bd4055b"
+    GIT_COMMIT_HASH = "0dee8acaea89df8590158a73290f8fce329d8979"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
@@ -386,6 +386,54 @@ class MetagenomeAPI:
         # At some point might do deeper type checking...
         if not isinstance(result, dict):
             raise ValueError('Method search_contigs return value ' +
+                             'result is not type dict as required.')
+        # return the results
+        return [result]
+
+    def get_contig_info(self, ctx, params):
+        """
+        :param params: instance of type "GetContigInfoParams" -> structure:
+           parameter "ref" of String, parameter "contig_id" of String
+        :returns: instance of type "GetContigInfoResult" -> structure:
+           parameter "contig" of type "contig" (contig_id - identifier of
+           contig feature_count - number of features associated with contig
+           length - the dna sequence length of the contig) -> structure:
+           parameter "contig_id" of String, parameter "feature_count" of
+           Long, parameter "length" of Long
+        """
+        # ctx is the context object
+        # return variables are: result
+        #BEGIN get_contig_info
+        if 'ref' not in params:
+          raise RuntimeError(f"'ref' argument required for get_contig_info")
+        if 'contig_id' not in params:
+          raise RuntimeError(f"'contig_id' argument required for get_contig_info")
+        contig_id = params['contig_id']
+        ws = Workspace(self.config['workspace-url'], token=ctx['token'])
+        ama_utils = AMAUtils(ws)
+        params['included_fields'] = ['contig_ids', 'contig_lengths']
+        data = ama_utils.get_annotated_metagenome_assembly(params)['genomes'][0]['data']
+        contig_ids = data['contig_ids']
+        contig_lengths = data['contig_lengths']
+        for i, c in enumerate(contig_ids):
+          if c == contig_id:
+            length = contig_lengths[i]
+            break
+        feature_count = self.msu.search_contig_feature_count(ctx["token"],
+                                params.get("ref"),
+                                contig_id)
+        result = {
+          'contig': {
+            "contig_id": contig_id,
+            "length": length,
+            "feature_count": feature_count
+          }
+        }
+        #END get_contig_info
+
+        # At some point might do deeper type checking...
+        if not isinstance(result, dict):
+            raise ValueError('Method get_contig_info return value ' +
                              'result is not type dict as required.')
         # return the results
         return [result]

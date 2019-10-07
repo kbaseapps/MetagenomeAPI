@@ -16,17 +16,16 @@ class MetagenomeSearchUtils:
         self.debug = config.get("debug") == "1"
         self.max_sort_mem_size = 250000
 
-    def search_contig_feature_count(self, token, ref, contig_id, start, limit):
+    def search_contig_feature_count(self, token, ref, contig_id):
         """
         Given a contig, find the number of features it has
         token         - workspace authentication token
         ref           - workspace object reference
         contig_id     - contig id of contig to query around
-        start         - elasticsearch page start delimeter
-        limit         - elasticserch page limit
         """
         extra_must = [{'term': {'contig_ids': contig_id}}]
-        ret = self._elastic_query(token, ref, limit, start, [('id', 1)], extra_must=extra_must)
+        # limit and size set to 1 to avoid needlessly unenforcing 'terminate_after' in search_api
+        ret = self._elastic_query(token, ref, 1, 1, [('id', 1)], extra_must=extra_must)
         # this will correspond to 'feature_count'
         return ret['num_found']
 
