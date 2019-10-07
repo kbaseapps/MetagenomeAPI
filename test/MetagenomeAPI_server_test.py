@@ -83,6 +83,8 @@ class MetagenomeAPITest(unittest.TestCase):
             'workspace_name': cls.wsName,
             'assembly_name': 'MyAssembly'
         }
+        print(os.path.isfile(cls.assembly_fasta_file_path))
+
         cls.assembly_ref_1 = cls.au.save_assembly_from_fasta(assembly_params)
         print('Assembly1:' + cls.assembly_ref_1)
 
@@ -158,32 +160,54 @@ class MetagenomeAPITest(unittest.TestCase):
         """
         self.maxDiff=None
         ref = "43655/58/1"
+        # sort by 'length'
         params = {
             "ref": ref,
             "start": 0,
             "limit": 10,
-            "sort_by": ("length", 1)
+            "sort_by": ("length", 0)
         }
+        b = time.time()
         ret = self.getImpl().search_contigs(self.getContext(), params)[0]
+        # print(f"\n------'length' sort takes {time.time() - b} seconds to run------\n")
         self.assertTrue('contigs' in ret)
         self.assertTrue('start' in ret)
         self.assertTrue('num_found' in ret)
         self.assertEquals(len(ret['contigs']), 10)
         self.assertEquals([c['length'] for c in ret['contigs']],
                           sorted([c['length'] for c in ret['contigs']], reverse=True))
+        # sort by 'contig_id'
         params = {
             "ref": ref,
             "start": 0,
             "limit": 10,
             "sort_by": ("contig_id", 1)
         }
+        b = time.time()
         ret = self.getImpl().search_contigs(self.getContext(), params)[0]
+        # print(f"\n------'contig_id' sort takes {time.time() - b} seconds to run------\n")
         self.assertTrue('contigs' in ret)
         self.assertTrue('start' in ret)
         self.assertTrue('num_found' in ret)
         self.assertEquals(len(ret['contigs']), 10)
         self.assertEquals([c['contig_id'] for c in ret['contigs']],
                           sorted([c['contig_id'] for c in ret['contigs']]))
+        # sort by 'feature_count'
+        params = {
+            "ref": ref,
+            "start": 0,
+            "limit": 10,
+            "sort_by": ("feature_count", 0)
+        }
+        b = time.time()
+        ret = self.getImpl().search_contigs(self.getContext(), params)[0]
+        # print(f"\n------'feature_count' sort takes {time.time() - b} seconds to run------\n")
+        self.assertTrue('contigs' in ret)
+        self.assertTrue('start' in ret)
+        self.assertTrue('num_found' in ret)
+        self.assertEquals(len(ret['contigs']), 10)
+        self.assertEquals([c['feature_count'] for c in ret['contigs']],
+                          sorted([c['feature_count'] for c in ret['contigs']], reverse=True))
 
     # @unittest.skip('x')
     def test_region_search(self):

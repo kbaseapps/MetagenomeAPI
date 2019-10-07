@@ -315,31 +315,55 @@ class MetagenomeAPI:
         contig_ids = data['contig_ids']
         contig_lengths = data['contig_lengths']
 
+        range_start = params['start']
+        range_end = params['start'] + params['limit']
+
         if sort_by[0] == 'contig_id' and sort_by[1] == 0:
           contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
         elif sort_by[0] == 'length':
           contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
+        elif sort_by[0] == 'feature_count':
+          # first sort by lengths
+          contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
+          width = int(params['limit']/2)
 
-        contigs = []
-        for i in range(params['start'], params['start'] + params['limit']):
-          # not a great solution, but works for now.
-          if i < len(contig_ids) or i >= 0:
-            contig_id = contig_ids[i]
-            contig_length = contig_lengths[i]
-            feature_count = self.msu.search_contig_feature_count(ctx["token"],
-                                          params.get("ref"),
-                                          contig_id,
-                                          params.get("start"),
-                                          params.get("limit"))
-            contig_data = {
-              "contig_id": contig_id,
-              "feature_count": feature_count,
-              "length": contig_length
-            }
-            contigs.append(contig_data)
+          range_start = max(range_start - width, 0)
+          range_end = min(range_end + width, len(contig_ids))
+
+        # get feature_counts
+        feature_counts = self.msu.search_contig_feature_counts(ctx["token"],
+                                params.get("ref"),
+                                len(contig_ids))
+
+        contigs = [
+          {
+            "contig_id": contig_ids[i],
+            "feature_count": feature_counts.get(contig_ids[i], 0),
+            "length": contig_lengths[i]
+          }
+          for i in range(range_start, range_end)
+        ]
+        # for i in range(range_start, range_end):
+        #   # not a great solution, but works for now.
+        #   if i < len(contig_ids) or i >= 0:
+        #     contig_id = contig_ids[i]
+        #     contig_length = contig_lengths[i]
+        #     feature_count = self.msu.search_contig_feature_count(ctx["token"],
+        #                                   params.get("ref"),
+        #                                   contig_id,
+        #                                   params.get("start"),
+        #                                   params.get("limit"))
+        #     contig_data = {
+        #       "contig_id": contig_id,
+        #       "feature_count": feature_count,
+        #       "length": contig_length
+        #     }
+        #     contigs.append(contig_data)
+
         # not ideal, but will work for now...
         if sort_by[0] == 'feature_count':
           contigs = sorted(contigs, key=lambda x: x['feature_count'], reverse=sort_by[1] == 0)
+          contigs = contigs[max(0, params['start']):min(len(contigs),params['start'] + params['limit'])]
 
         result =  {
           "contigs": contigs,

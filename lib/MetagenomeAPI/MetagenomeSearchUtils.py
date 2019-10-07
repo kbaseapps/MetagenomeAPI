@@ -30,6 +30,43 @@ class MetagenomeSearchUtils:
         # this will correspond to 'feature_count'
         return ret['num_found']
 
+    def search_contig_feature_counts(self, token, ref, num_contigs):
+        """
+        """
+        (workspace_id, object_id, version) = ref.split('/')
+        # we use namespace 'WSVER' for versioned elasticsearch index.
+        ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
+
+        headers = {"Authorization": token}        
+        params = {
+            "method": "search_objects",
+            "params": {
+                "query": {  # "term": {"parent_id": ama_id}},
+                    "bool": {
+                        "must": [{"term": {"parent_id": ama_id}}] 
+                    }
+                },
+                "indexes": ["annotated_metagenome_assembly_features_version"],
+                "size": 0,
+                "aggs": {
+                    "group_by_state": {
+                        "terms": {
+                            "field": "contig_ids",
+                            "size": num_contigs
+                        },
+                    }
+                }
+            }
+        }
+        resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
+        if not resp.ok:
+            raise Exception(f"Not able to complete search request against {self.search_url} "
+                            f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
+        respj = resp.json()
+        return {
+            b['key']: b['doc_count'] for b in respj['aggregations']['group_by_state']['buckets']
+        }
+
     def search_region(self, token, ref, contig_id, region_start, region_length, start, limit, sort_by):
         """
         Search a region of features in a given contig
@@ -105,7 +142,7 @@ class MetagenomeSearchUtils:
             print(("    (overall-time=" + str(time.time() - t1) + ")"))
         return ret
 
-    def _elastic_query(self, token, ref, limit, start, sort_by, extra_must=[]):
+    def _elastic_query(self, token, ref, limit, start, sort_by, extra_must=[], aggs=None):
         """
         Perform the query against the Search API 2, to get results from elasticsearch.
         token      - workspace authentication token
@@ -134,8 +171,10 @@ class MetagenomeSearchUtils:
                 "sort": [{s[0]: {"order": "asc" if s[1] else "desc"}} for s in sort_by]
             }
         }
-        if self.debug:
-            print(f"querying {self.search_url}, with params: {json.dumps(params)}")
+        if aggs:
+            params['aggs'] = aggs
+        # if self.debug:
+        # print(f"querying {self.search_url}, with params: {json.dumps(params)}")
         resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
         if not resp.ok:
             raise Exception(f"Not able to complete search request against {self.search_url} "
