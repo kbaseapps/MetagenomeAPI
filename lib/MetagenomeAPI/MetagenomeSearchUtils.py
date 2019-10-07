@@ -16,8 +16,60 @@ class MetagenomeSearchUtils:
         self.debug = config.get("debug") == "1"
         self.max_sort_mem_size = 250000
 
+    def search_contig_feature_count(self, token, ref, contig_id, start, limit):
+        """
+        Given a contig, find the number of features it has
+        token         - workspace authentication token
+        ref           - workspace object reference
+        contig_id     - contig id of contig to query around
+        start         - elasticsearch page start delimeter
+        limit         - elasticserch page limit
+        """
+        extra_must = [{'term': {'contig_ids': contig_id}}]
+        ret = self._elastic_query(token, ref, limit, start, [('id', 1)], extra_must=extra_must)
+        # this will correspond to 'feature_count'
+        return ret['num_found']
+
+    def search_contig_feature_counts(self, token, ref, num_contigs):
+        """
+        """
+        (workspace_id, object_id, version) = ref.split('/')
+        # we use namespace 'WSVER' for versioned elasticsearch index.
+        ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
+
+        headers = {"Authorization": token}        
+        params = {
+            "method": "search_objects",
+            "params": {
+                "query": {  # "term": {"parent_id": ama_id}},
+                    "bool": {
+                        "must": [{"term": {"parent_id": ama_id}}] 
+                    }
+                },
+                "indexes": ["annotated_metagenome_assembly_features_version"],
+                "size": 0,
+                "aggs": {
+                    "group_by_state": {
+                        "terms": {
+                            "field": "contig_ids",
+                            "size": num_contigs
+                        },
+                    }
+                }
+            }
+        }
+        resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
+        if not resp.ok:
+            raise Exception(f"Not able to complete search request against {self.search_url} "
+                            f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
+        respj = resp.json()
+        return {
+            b['key']: b['doc_count'] for b in respj['aggregations']['group_by_state']['buckets']
+        }
+
     def search_region(self, token, ref, contig_id, region_start, region_length, start, limit, sort_by):
         """
+        Search a region of features in a given contig
         token         - workspace authentication token
         ref           - workspace object reference
         contig_id     - contig id of contig to query around
@@ -26,19 +78,17 @@ class MetagenomeSearchUtils:
         start         - elasticsearch page start delimeter
         limit         - elasticserch page limit
         sort_by       - list of tuples of (field to sort by, ascending bool) for elasticsearch
-
         """
         if start is None:
             start = 0
         if limit is None:
-            limit = 1000
+            limit = 100
         if sort_by is None:
             sort_by = [('starts', 1), ('stops', 1)]
 
         t1 = time.time()
-        extra_query = [
-            {
-                "range": {
+        extra_must = [
+            {"range": {
                     "starts": {
                         "gte": int(region_start)
                     }
@@ -48,9 +98,9 @@ class MetagenomeSearchUtils:
                         "lte": int(region_start + region_length)
                     }
                 }
-            }
+            },{"term": {"contig_ids": contig_id}}
         ]
-        ret = self._elastic_query(token, ref, limit, start, sort_by, extra_query=extra_query)
+        ret = self._elastic_query(token, ref, limit, start, sort_by, extra_must=extra_must)
         # not sure we need to include any of these
         ret['region_start'] = region_start
         ret['contig_id'] = contig_id
@@ -59,13 +109,15 @@ class MetagenomeSearchUtils:
             print(("    (overall-time=" + str(time.time() - t1) + ")"))
         return ret
 
-    def search(self, token, ref, start, limit, sort_by):
+    def search(self, token, ref, start, limit, sort_by, query):
         """
+        Search features against one Annotated Metagenome Assembly, with or without a query string.
         token   - workspace authentication token
         ref     - workspace object reference
         start   - elasticsearch page start delimiter
         limit   - elasticsearch page limit
         sort_by - list of tuples of (field to sort by, ascending bool) for elasticsearch
+        query   - text to prefix search on all fields.
         """
         if start is None:
             start = 0
@@ -74,14 +126,32 @@ class MetagenomeSearchUtils:
         if sort_by is None:
             sort_by = [('id', 1)]
 
+        extra_must = []
+        if query:
+            fields = ["functions", "functional_descriptions", "id", "type"]
+            shoulds = []
+            for field in fields:
+                shoulds.append({
+                    "prefix": {field: {"value": query}}
+                })
+            extra_must.append({'bool': {'should': shoulds}})
+
         t1 = time.time()
-        ret = self._elastic_query(token, ref, limit, start, sort_by)
+        ret = self._elastic_query(token, ref, limit, start, sort_by, extra_must=extra_must)
         if self.debug:
             print(("    (overall-time=" + str(time.time() - t1) + ")"))
         return ret
 
-    def _elastic_query(self, token, ref, results_size, from_result, sort_by, extra_query=[]):
-        """"""
+    def _elastic_query(self, token, ref, limit, start, sort_by, extra_must=[], aggs=None):
+        """
+        Perform the query against the Search API 2, to get results from elasticsearch.
+        token      - workspace authentication token
+        ref        - workspace object reference
+        limit      - elasticsearch page limit
+        start      - elasticsearch page start delimiter
+        sort_by    - list of tuples of (field to sort by, ascending bool) for elasticsearch
+        extra_must - list of additional elasticsearch eql json blobs to include as query
+        """
         (workspace_id, object_id, version) = ref.split('/')
         # we use namespace 'WSVER' for versioned elasticsearch index.
         ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
@@ -91,25 +161,34 @@ class MetagenomeSearchUtils:
             "method": "search_objects",
             "params": {
                 "query": {
-                    "bool": {"must": [{"term": {"parent_id": ama_id}}] + extra_query}
-                    # "term": {"parent_id": ama_id},
-                    # **extra_query
+                    "bool": {
+                        "must": [{"term": {"parent_id": ama_id}}] + extra_must 
+                    }
                 },
-                "indexes": ["annotated_metagenome_assembly_features_version:1"],
-                "from": from_result,
-                "size": results_size,
+                "indexes": ["annotated_metagenome_assembly_features_version"],
+                "from": start,
+                "size": limit,
                 "sort": [{s[0]: {"order": "asc" if s[1] else "desc"}} for s in sort_by]
             }
         }
+        if aggs:
+            params['aggs'] = aggs
+        # if self.debug:
+        # print(f"querying {self.search_url}, with params: {json.dumps(params)}")
         resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
         if not resp.ok:
             raise Exception(f"Not able to complete search request against {self.search_url} "
                             f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
         respj = resp.json()
-        return self._process_resp(respj, from_result, params)
+        return self._process_resp(respj, start, params)
 
     def _process_resp(self, resp, start, params):
-        """"""
+        """
+        Format the response
+        resp   - json response from search api
+        start  - integer start of pagination
+        params - parameters used to search against SearchAPI2
+        """
         if resp.get('hits') and resp['hits'].get('hits'):
             hits = resp['hits']['hits']
             return {
@@ -119,10 +198,13 @@ class MetagenomeSearchUtils:
                 "features": [self._process_feature(h['_source']) for h in hits]
             }
         else:
-            raise RuntimeError(f"no 'hits' in http response: {resp}")
+            raise RuntimeError(f"no 'hits' with params {json.dumps(params)}\n in http response: {resp}")
 
     def _process_feature(self, hit_source):
-        """"""
+        """
+        Format individual features.
+        hit_source - the '_source' fields of the elasticsearch response body of a feature.
+        """
         starts = hit_source.get('starts')
         stops = hit_source.get('stops')
         contig_ids = hit_source.get('contig_ids')
@@ -154,4 +236,3 @@ class MetagenomeSearchUtils:
             "function": functions,
             "ontology_terms": {}
         }
-

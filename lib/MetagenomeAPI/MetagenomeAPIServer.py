@@ -358,6 +358,10 @@ class Application(object):
                              name='MetagenomeAPI.search_region',
                              types=[dict])
         self.method_authentication['MetagenomeAPI.search_region'] = 'required'  # noqa
+        self.rpc_service.add(impl_MetagenomeAPI.search_contigs,
+                             name='MetagenomeAPI.search_contigs',
+                             types=[dict])
+        self.method_authentication['MetagenomeAPI.search_contigs'] = 'required'  # noqa
         self.rpc_service.add(impl_MetagenomeAPI.status,
                              name='MetagenomeAPI.status',
                              types=[dict])
