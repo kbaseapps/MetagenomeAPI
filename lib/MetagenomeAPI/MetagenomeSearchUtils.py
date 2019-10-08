@@ -229,9 +229,14 @@ class MetagenomeSearchUtils:
         return {
             "location": location,
             "feature_id": hit_source.get('id'),
+            "dna_sequence": hit_source.get('dna_sequence'),
+            "parent_gene": hit_source.get('parent_gene'),
+            "size": hit_source.get('size'),
+            "functional_descriptions": hit_source.get('functional_descriptions'),
+            "warnings": hit_source.get('warnings'),
             "feature_type": hit_source.get('type'),
             "global_location": gloc,
-            "aliases": {},
+            "aliases": hit_source.get('aliases', {}),
             "function": functions,
             "ontology_terms": {}
         }

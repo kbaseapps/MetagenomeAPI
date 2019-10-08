@@ -155,6 +155,11 @@ module MetagenomeAPI {
 
     typedef structure {
         string feature_id;
+        string dna_sequence;
+        list<string> warnings;
+        string parent_gene;
+        int size;
+        string functional_descriptions;
         mapping<string, list<string>> aliases;
         string function;
         list<Location> location;

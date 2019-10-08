@@ -292,6 +292,9 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertTrue('start' in ret, msg=f"returned: {ret.keys()}")
         self.assertTrue('num_found' in ret, msg=f"returned: {ret.keys()}")
         self.assertTrue('query' in ret, msg=f"returned: {ret.keys()}")
+        # print('-'*80)
+        # print(json.dumps(ret, indent=2))
+        # print('-'*80)
         compare_path = os.path.join(_DIR, "data", "search_test_resp_ci_43655_58_1.json")
         with open(compare_path) as f:
             compare = json.load(f)

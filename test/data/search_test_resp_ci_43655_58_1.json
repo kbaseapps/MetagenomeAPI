@@ -1,138 +1,302 @@
-{   "features": [   {   "aliases": {},
-                        "feature_id": "Ga0065724_100001.1",
-                        "feature_type": "CDS",
-                        "function": null,
-                        "global_location": {   "contig_id": "Ga0065724_100001",
-                                               "start": 325,
-                                               "stop": 525,
-                                               "strand": "+"},
-                        "location": [   {   "contig_id": "Ga0065724_100001",
-                                            "start": 325,
-                                            "stop": 525,
-                                            "strand": "+"}],
-                        "ontology_terms": {}},
-                    {   "aliases": {},
-                        "feature_id": "Ga0065724_100001.1000_gene",
-                        "feature_type": "gene",
-                        "function": null,
-                        "global_location": {   "contig_id": "Ga0065724_100001",
-                                               "start": 288297,
-                                               "stop": 1107,
-                                               "strand": "-"},
-                        "location": [   {   "contig_id": "Ga0065724_100001",
-                                            "start": 288297,
-                                            "stop": 1107,
-                                            "strand": "-"}],
-                        "ontology_terms": {}},
-                    {   "aliases": {},
-                        "feature_id": "Ga0065724_100001.1003_gene",
-                        "feature_type": "gene",
-                        "function": null,
-                        "global_location": {   "contig_id": "Ga0065724_100001",
-                                               "start": 289222,
-                                               "stop": 807,
-                                               "strand": "-"},
-                        "location": [   {   "contig_id": "Ga0065724_100001",
-                                            "start": 289222,
-                                            "stop": 807,
-                                            "strand": "-"}],
-                        "ontology_terms": {}},
-                    {   "aliases": {},
-                        "feature_id": "Ga0065724_100001.1007",
-                        "feature_type": "CDS",
-                        "function": null,
-                        "global_location": {   "contig_id": "Ga0065724_100001",
-                                               "start": 290360,
-                                               "stop": 1152,
-                                               "strand": "-"},
-                        "location": [   {   "contig_id": "Ga0065724_100001",
-                                            "start": 290360,
-                                            "stop": 1152,
-                                            "strand": "-"}],
-                        "ontology_terms": {}},
-                    {   "aliases": {},
-                        "feature_id": "Ga0065724_100001.1019",
-                        "feature_type": "CDS",
-                        "function": null,
-                        "global_location": {   "contig_id": "Ga0065724_100001",
-                                               "start": 294553,
-                                               "stop": 1554,
-                                               "strand": "-"},
-                        "location": [   {   "contig_id": "Ga0065724_100001",
-                                            "start": 294553,
-                                            "stop": 1554,
-                                            "strand": "-"}],
-                        "ontology_terms": {}},
-                    {   "aliases": {},
-                        "feature_id": "Ga0065724_100001.1022_gene",
-                        "feature_type": "gene",
-                        "function": null,
-                        "global_location": {   "contig_id": "Ga0065724_100001",
-                                               "start": 295289,
-                                               "stop": 378,
-                                               "strand": "-"},
-                        "location": [   {   "contig_id": "Ga0065724_100001",
-                                            "start": 295289,
-                                            "stop": 378,
-                                            "strand": "-"}],
-                        "ontology_terms": {}},
-                    {   "aliases": {},
-                        "feature_id": "Ga0065724_100001.1029",
-                        "feature_type": "CDS",
-                        "function": null,
-                        "global_location": {   "contig_id": "Ga0065724_100001",
-                                               "start": 297548,
-                                               "stop": 1161,
-                                               "strand": "-"},
-                        "location": [   {   "contig_id": "Ga0065724_100001",
-                                            "start": 297548,
-                                            "stop": 1161,
-                                            "strand": "-"}],
-                        "ontology_terms": {}},
-                    {   "aliases": {},
-                        "feature_id": "Ga0065724_100001.1032",
-                        "feature_type": "CDS",
-                        "function": null,
-                        "global_location": {   "contig_id": "Ga0065724_100001",
-                                               "start": 298583,
-                                               "stop": 777,
-                                               "strand": "-"},
-                        "location": [   {   "contig_id": "Ga0065724_100001",
-                                            "start": 298583,
-                                            "stop": 777,
-                                            "strand": "-"}],
-                        "ontology_terms": {}},
-                    {   "aliases": {},
-                        "feature_id": "Ga0065724_100001.1032_gene",
-                        "feature_type": "gene",
-                        "function": null,
-                        "global_location": {   "contig_id": "Ga0065724_100001",
-                                               "start": 298583,
-                                               "stop": 777,
-                                               "strand": "-"},
-                        "location": [   {   "contig_id": "Ga0065724_100001",
-                                            "start": 298583,
-                                            "stop": 777,
-                                            "strand": "-"}],
-                        "ontology_terms": {}},
-                    {   "aliases": {},
-                        "feature_id": "Ga0065724_100001.1035",
-                        "feature_type": "CDS",
-                        "function": null,
-                        "global_location": {   "contig_id": "Ga0065724_100001",
-                                               "start": 299049,
-                                               "stop": 444,
-                                               "strand": "-"},
-                        "location": [   {   "contig_id": "Ga0065724_100001",
-                                            "start": 299049,
-                                            "stop": 444,
-                                            "strand": "-"}],
-                        "ontology_terms": {}}],
-    "num_found": 100000,
-    "query": {   "method": "search_objects",
-                 "params": {   "from": 0,
-                               "indexes": [   "annotated_metagenome_assembly_features_version"],
-                               "query": {   "bool": {   "must": [   {   "term": {   "parent_id": "WSVER::43655:58:1"}}]}},
-                               "size": 10,
-                               "sort": [{"id": {"order": "asc"}}]}},
-    "start": 0}
+{
+  "num_found": 100000,
+  "start": 0,
+  "query": {
+    "method": "search_objects",
+    "params": {
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "term": {
+                "parent_id": "WSVER::43655:58:1"
+              }
+            }
+          ]
+        }
+      },
+      "indexes": [
+        "annotated_metagenome_assembly_features_version"
+      ],
+      "from": 0,
+      "size": 10,
+      "sort": [
+        {
+          "id": {
+            "order": "asc"
+          }
+        }
+      ]
+    }
+  },
+  "features": [
+    {
+      "location": [
+        {
+          "contig_id": "Ga0065724_100001",
+          "start": 325,
+          "stop": 525,
+          "strand": "+"
+        }
+      ],
+      "feature_id": "Ga0065724_100001.1",
+      "dna_sequence": "ATGAAAAGGGAAATCCGGCTGGTCGAAGTGCTGCTGATGGCGGGGCTCGGGCTCATTTTTCTGTTCATGCTGTTCCACGACTGGGTGCCGATGGGCAGCCTGAACGACGTGGAGGCCGTCAAAGCCCATCAAGGCGTTTCTCAGCTTGTGCTCGTCACGGCGTTCAATGCCGCCCAAATTGCCGTGCTGATGGGCCTCGTGCTTCTGTATGCCGGCAGGCGGTTTCCGCTGTGGGCGAGGCTTTGGCTGATCATCCATCAGGGCTTCATTCTGTACGGCGCCATCAAGGCCTGGTGGCTTCCGTATCTGTTCGGGATCGGCGCGGCCGAGCGGATCGAAAGCTATCATGCGATGTTCGGGAACACCCATGCGTTCCTGCCGATGAACAACGGCATCGTGCCGAACACGATCCACGTCCTGTTCCATGCCACGCTGGTGCTGTGCCTGATCCTGACGGTCTACATCAGCCTGACGCAGCCGAAGAAACAGCCGAAGATGCAAGCGGCCGGGACGGCCGTTGCCTGA",
+      "parent_gene": "Ga0065724_100001.1_gene",
+      "size": 525,
+      "functional_descriptions": null,
+      "warnings": null,
+      "feature_type": "CDS",
+      "global_location": {
+        "contig_id": "Ga0065724_100001",
+        "start": 325,
+        "stop": 525,
+        "strand": "+"
+      },
+      "aliases": {},
+      "function": null,
+      "ontology_terms": {}
+    },
+    {
+      "location": [
+        {
+          "contig_id": "Ga0065724_100001",
+          "start": 288297,
+          "stop": 1107,
+          "strand": "-"
+        }
+      ],
+      "feature_id": "Ga0065724_100001.1000_gene",
+      "dna_sequence": "GTGATCCAGCCCAAACCGAACATCGTTCACCTGCCGGTGTACCAGCCCGGCAAACCGATAGAGGAAGTCAAGCGGGAGCTCGGCCTCGAGCGCGTCGTCAAGCTGGCGTCCAACGAGAACCCGTTCGGCTGCTCGCCCGCCGCCAAAGAAGCCGTCGTGCGGGAACTGGCCAACACCGGCCTGTATCCCGACGGGTCGGCCGCGGAGCTGAGGGAAGCGCTGGCCGCGCATCTCGGCGTGGACGGCGGCCAGATCATTTTCGGCGCCGGCGCCGATGAAGTGATCCTGATGATCGCCCGGGCGTTCCTCAGGCCCGGCGACGAAACGGTGATGGCCCGCGACACGTTCGGCCAGTACAGGCACAACGCCGAGGTGGAAGGCGCCGCGGTGATCGAAGTGCCGCTCCGCGACGGCAAGCACGACTTGCAGGCGATGCTGGACGAAGTGACGGAAAAGACGCGGATCGTGTGGATCTGCAATCCGAACAATCCGACGGGCACGATCGTGACGCACAAGGAAGTGGAAGCGTTCCTCGGACGCGTCGGGGAAGACGTGCTCGTCGTGCTGGACGAAGCCTACTCGGAATATGTCATGACGCCGGATTACCCGGACGGGCTTTCGCTTCTCAGGCAGTTCCCGAACCTGGTGCTGCTGCGCACCTTTTCGAAAATCTACGGCCTGGCGGCCCTCCGGATCGGTTACGGCATCGGCCATCCCGACGTCATCCGCGCCATCAACCAGGTGCGCCCGCCCTTCAACACGACCCGGGCGACCCAGAAGGCCGCCCTTGCGGCGCTCGGGGACCAGGCGTTCGTCGAGCGCTGCCGGCGGGAAAACGCGGCGGGACTCCAATACCTGGCCGGCGAATTCCGGCGCCTCGGGCTTTCGTTCTATCCGGCCTACGGCAACTTCATCATGGTGGACACCGGCCTGCCCTCGGCCCTTGTGTTCGACGCGCTCCTGCGCAAGGGGTACATCGTCCGGGCCGGCCACCAGCTGGGGAACTTCCCCACGTCCATCCGCGTGACGGCGGGCAGCCGGGAGCAGAACGAAGGCTTCATCCGGGCGCTGGAGGACGTGCTGGCCACCCTCCGGGTGAACGCGTGA",
+      "parent_gene": null,
+      "size": 1107,
+      "functional_descriptions": null,
+      "warnings": [
+        "This gene was not in the source GenBank or GFF file. It was added to be the parent of a CDS."
+      ],
+      "feature_type": "gene",
+      "global_location": {
+        "contig_id": "Ga0065724_100001",
+        "start": 288297,
+        "stop": 1107,
+        "strand": "-"
+      },
+      "aliases": {},
+      "function": null,
+      "ontology_terms": {}
+    },
+    {
+      "location": [
+        {
+          "contig_id": "Ga0065724_100001",
+          "start": 289222,
+          "stop": 807,
+          "strand": "-"
+        }
+      ],
+      "feature_id": "Ga0065724_100001.1003_gene",
+      "dna_sequence": "ATGAACGCCATTGACGAACTGTTCCGGCGCATCCGCGCGGAAGGCGGCACGGCGCTCATGCCGTTCATCACGATGGGGGATCCGGATCTGGAGACGACCGTCGACATCATCCTCAAACTGGAAGCAAGCGGCGCCGATCTGATCGAGCTCGGCGTTCCGTATTCGGACCCCCTCGCCGACGGGCCCGTCATCCAGCGGGCGGCCGAACGGGCCCTCCGGAACCGGATCACCATCCTCGACTGCATCGAAGCGGCCGGCAAAGCCCGCGAGCGGGGAGCGAAGCTGCCGTTTGTCCTGTTCACGTACTTCAATCCCCTTCTTCAAGCCGGCATCGACCGCGTGTTCCGCCTGGCGGCGGAACGGGGATTTTCCGGCGCCATCGTGCCCGACCTGCCGATGGAAGAAGACGGCGACGCGCGGGAAGCGGCAACGCGTTACGGCCTGCACCTCATTCCCCTTGTGGCGCCGACGTCGAAGGACCGGGTGCGGCGCATCGTCTCCCGCGCCGGCGGCTTCGTCTATTGCGTGTCGTCCCTCGGCGTGACGGGCGAGCGGCAGTCGTTCCACGAACGGGTGGACGAGTTTCTGGACACGGTGAAAAGCGCCACCGATCTGCCCGTCGCCGTCGGGTTCGGGATTTCGAACCGGGAGCAGTTTCGCGCCTTTGCCAAGCGGTGCGACGGGGTCATCGTCGGCAGCGCCTTCGTGCGGCGGATCGGGGAACTCGCCCCGAAGCTGGCGGAGCCGTCGAGCCGCCGGGAGGCGCTGGACGAGCTGGGCCGCTTCGCCGCGGAACTGAAGGACTGA",
+      "parent_gene": null,
+      "size": 807,
+      "functional_descriptions": null,
+      "warnings": [
+        "This gene was not in the source GenBank or GFF file. It was added to be the parent of a CDS."
+      ],
+      "feature_type": "gene",
+      "global_location": {
+        "contig_id": "Ga0065724_100001",
+        "start": 289222,
+        "stop": 807,
+        "strand": "-"
+      },
+      "aliases": {},
+      "function": null,
+      "ontology_terms": {}
+    },
+    {
+      "location": [
+        {
+          "contig_id": "Ga0065724_100001",
+          "start": 290360,
+          "stop": 1152,
+          "strand": "-"
+        }
+      ],
+      "feature_id": "Ga0065724_100001.1007",
+      "dna_sequence": "GTGCCGGAAACGCTGATGAGCGCCCTTCTGGAACTGGAAGAAGCCTATTTGCGGCTGAAGGACGATCCGGGCTTCCGGGCGGAAGTCGGAGAACTGCTCCGCCAATATTCGGGACGGCCGACGCCGCTGTACAGGGCCGACCGGCTGAGCGAGACGCTGGGCGGCGCCACGATCTATCTGAAGCGGGAAGACCTGAACCATACCGGCGCCCACAAAATCAACAACGCCATCGGCCAGGCGGTGCTGGCCAGACGCATGGGCAAACGGAAGGTCATCGCCGAAACCGGCGCCGGGCAGCACGGCGTGGCGACGGCCACCGTCGCCGCCCTGCTCGGCCTGGAATGCAAGGTGTTCATGGGCGAAGAGGACATGAAGCGGCAGAAGCTGAACGTCTTCCGCATGCGGCTTCTCGGCGCCGAAGTGGTGCCGGTCACAAGCGGCACGCGCACATTGAAAGACGCCTGCAACGAGACGCTCCGCCACTGGGTGAGCCACGTGGAAGACACCTACTATATTCTCGGCTCCGCCACGGGCCCCCACCCGTATCCGATGATGGTGCGGGATTTCCAGCGGGTGATCGGCGACGAGACGCGCCGCCAGATTCTGGAGGCGGAAGGCCGCCTGCCGGACGTGATCATCGCCTGCGTCGGCGGCGGCAGCAACGCGGCCGGGATGTTTTATCCGTTCCTCGATGACGCCGGCGTCCGGCTCGTCGGCGCGGAAGCCGCCGGGCGGGGGATCGACACGGGCGAACACGCGGCCACGCTGACGAAAGGGCGGCCGGGCGTGTTCCAGGGGTCGTACAGCTACGTCTTGCAGGACGAATTCGGCCAGGTTTTGCCCGCGCATTCGATCTCGGCCGGGCTCGATTATCCGGGCGTCGGTCCCGAGCACGCGCATCTGAAGGAAACGGGCCGGGCGGAATACGTGCCGGTGAGCGACCGGGAGGCGCTCGAGGCGCTCCGCCTGCTCAGCCGCACGGAAGGGATCATCCCCGCGCTGGAAAGCGCCCACGCCGTCGCCCAGGCGGTCAAGATGGCGCCCGCCATGGGGCGGGACCGGATCATCGTCGTCAACCTGTCCGGCCGGGGCGACAAGGACGTGGAAACGATCATGCCGTACCTGGAGGGCGAGAGCGATGAACGCCATTGA",
+      "parent_gene": "Ga0065724_100001.1007_gene",
+      "size": 1152,
+      "functional_descriptions": null,
+      "warnings": null,
+      "feature_type": "CDS",
+      "global_location": {
+        "contig_id": "Ga0065724_100001",
+        "start": 290360,
+        "stop": 1152,
+        "strand": "-"
+      },
+      "aliases": {},
+      "function": null,
+      "ontology_terms": {}
+    },
+    {
+      "location": [
+        {
+          "contig_id": "Ga0065724_100001",
+          "start": 294553,
+          "stop": 1554,
+          "strand": "-"
+        }
+      ],
+      "feature_id": "Ga0065724_100001.1019",
+      "dna_sequence": "ATGGACCGTTCGGAGGAATTCGCGCGGGTGCTGGAACAGGCCCGGTCCTTCAACCTGATTCCGGTGGTCCGCACGCTGATGGCCGACATGGAAACGCCGATCCGCGTGTTCCGCCAGTTCTGGGAGGAGAAAAACGCCTTTCTGCTGGAAAGCGTCGAAGGGGGGGCCCAGTGGGGGCGCTACTCCTACATCGGCACCGATCCGTTCCTCGTCGTCCGCGGAAAGAACGGCCGCATGGCCATGGAGATGGGCGGCCGGGTGACGGAAATCGCCGGAAAGCCGGTGGAGTTGATCAAGTCGGTCATGCGGTCGTACAAAAGCGCCAGGCCGGATGGCATGCCGCCGTTCACCGGCGGCGCGATCGGCTATTTCGCCTACGATGTCGTGCGGATGTATGAAAACGTGCCGGCCCATGCCGTCGACGATCTGGCCATGGACGACGTGCACTTCCTGTTTTGCGACCAGGTGATCGCCTTCGACCATTTCAGACAGCAGATCCACGTCATCGCCAACGTCCATGCCGAACCCGGCGCCGGCGAAGCGGACATTCGCCGGAACTATGAGCGGGCTTTGGAAAAAATCGAAGCGCTGACCCGCCGGCTGCGCATGCCGCTGCCGCCCGATCCGGTCATGGCCGGCGCCGTGCCGTCCGACGCGGACATCGGGCCGCTTTCCTCCAACATGAGCCGCGAACAATTCATGGAGAAAGTGGAGAAAGCAAAGGACTACATCCGCGCGGGGGACATTTTCCAGGTGGTGCTGTCCCAGCGCTTCATGGTCGAAACCGGCGTGTCGCCCCTCGACGTGTACCGGGTGCTGCGCACGCTGAATCCGTCCCCCTACATGTATTGCCTGAAGATGGGCGACGAGACGATCGTCGGCGCCTCGCCGGAACTGCTCGTCAAGGTGGACGGCGACCGGGTGGAAACGAGGCCGATCGCCGGCACCCGGCCGCGGGGCGCGACGCCGGAGGAAGATCTCCGGCTCGAGCGGGATCTTCTGGCGGACGAAAAGGAGCGGGCCGAGCATCTGATGCTGGTCGACCTCGGCCGCAACGACATCGGCCGGGTCGCCGAGTTCGGCAGCGTGCGCTGCGATTCGTTCATGGACATCGAGCGGTATTCCCACGTCATGCACATCGTTTCCAACGTGTCGGGCAAACTCCGCGGGGACCGCGACTTTTTCGACGCGCTCGTCGCCTGTCTGCCGGCCGGCACCGTGTCCGGAGCGCCGAAAATCCGGGCAATGGAAATCATCGCGGAGCTGGAGCCGGAAGCAAGGGGCGTCTACGCCGGCGCCATCGGCTATCTCGGCTTCACCGGCTCCCTGAACACGTGCATCGCGATCCGCACCGCCGTGTTCAAGGACGGCAAGGCCTACGTGCAGGCCGGGGCCGGCATCGTGCACGATTCCGTGCCGGAGAACGAATACGCGGAATCGGTGAACAAGGCCAAAGGCGTGCTGAAGGCGATCCGCATGGCCGAAGCGATGTTCCGGCCGAAGCCGGAACCGGACCGGCCGGCGGTCAATCACGATTACGTGATCAACCGGTAA",
+      "parent_gene": "Ga0065724_100001.1019_gene",
+      "size": 1554,
+      "functional_descriptions": null,
+      "warnings": null,
+      "feature_type": "CDS",
+      "global_location": {
+        "contig_id": "Ga0065724_100001",
+        "start": 294553,
+        "stop": 1554,
+        "strand": "-"
+      },
+      "aliases": {},
+      "function": null,
+      "ontology_terms": {}
+    },
+    {
+      "location": [
+        {
+          "contig_id": "Ga0065724_100001",
+          "start": 295289,
+          "stop": 378,
+          "strand": "-"
+        }
+      ],
+      "feature_id": "Ga0065724_100001.1022_gene",
+      "dna_sequence": "ATGAAGGTGAGGGGCATTCGCGGCGCAACCACGATACGGGAAAACGACGCGGAATTGATGCAGCGGGCGACGGTGGACCTGATGCAGAAACTGATCGCGGAAAACGGGCTGGTGCCCGACAACGTGGCCGCCGTGTTCATCACCGTCACCCAGGATTTGAACGCGGCGTTTCCCGCCGGCGCCATCCGCGCGCTGCCCGGCTGGGAACTCGTGCCGCTCATGTGTTCCCTGGAAATCGACGTTCCCGGCGGACTGGAGCGCTGCATCCGGGTGATGGTGCTGTACAACACGGACAAGGACCAGTCGGAAATCCGCCACGTCTATCTGAACGACGCCCGGAGCCTGCGGCCGGATCTGGCGGGCGGTTCCGACGCGTAA",
+      "parent_gene": null,
+      "size": 378,
+      "functional_descriptions": null,
+      "warnings": [
+        "This gene was not in the source GenBank or GFF file. It was added to be the parent of a CDS."
+      ],
+      "feature_type": "gene",
+      "global_location": {
+        "contig_id": "Ga0065724_100001",
+        "start": 295289,
+        "stop": 378,
+        "strand": "-"
+      },
+      "aliases": {},
+      "function": null,
+      "ontology_terms": {}
+    },
+    {
+      "location": [
+        {
+          "contig_id": "Ga0065724_100001",
+          "start": 297548,
+          "stop": 1161,
+          "strand": "-"
+        }
+      ],
+      "feature_id": "Ga0065724_100001.1029",
+      "dna_sequence": "TTGCGGTTTTTGACGGCTGGAGAGACACACGGGCCGCAGCTGACGGCCATCATCGAAGGCGTGCCGAGCAACCTGGAATTCGACTTCGACCTGGTGAACGAACAGCTGGCCCGGCGGCAGAAAGGATACGGCCGCGGCCACCGGATGCAGATCGAGAAGGACACGGTGAAGGTGGTCGGCGGCGTCCGGCACGGGCGCACGACGGGCGCGCCGATCGCGCTGGTCATCGAAAACCGGGACTGGACCCATTGGACGAAGGTGATGAGCGTCGAGCCGGTGGACGGGGACGAGGCGAAGCGGCGGATCCACCGGCCGCGGCCCGGCCACGCCGATCTGGCCGGCGGGCTGAAATACAACCAGCGGGACTTGCGAAACATCCTCGAGCGGTCCAGTGCCAGGGAAACGGCCGCCCGCGTCGCGTGCGGCGCCGTGGCCCGCATGATCCTGCGGGCGTTCGGCATCCGGGTGGCCGGCCAGGTGCTGCGCATCGGCGAAGTGGAAGCGCGGCGCTTCGATCTGCCCCTCGACGAGCTGGTCCGCATCACCGAGGAGTCGCCGGTGCGGGTCGTCGACAAGGAAGCGGAAGCGAAAATGATGGCGCTCATCGACAAGGCCAAGCAGGAAGGCGACTCCCTCGGCGGCGTGGTGGAATGCATCGTGGAGGGCGTGCCCGCCGGCCTCGGCAGCCACGTGCAATGGGACCGCAAGCTGGACGGCCGGATCGCCCGGGCGGTGGTGTCCATCAACGCCTTCAAGGGCGTCGAATTCGGCATCGGCTTCGAGGCCGCCGCCAGGCCGGGTTCCCAGGTGCACGACGAGATCCTGTACAGCGAAGAGCGCGGGTTTTACCGGGCCACCAACCGGCTCGGCGGGTTTGAAGGCGGCATGACCAACGGCATGCCGATCGTCGTGCGGGGCGTCATGAAGCCGATTCCGACGCTGTACAAGCCCCTTGCCAGCGTGGACATCGACACGAAGGAACCGTTCGCGGCCCAGCTGGAACGCTCCGACGTCTGCGCCGTGCCGGCGGCCAGCGTGGTGATGGAAAACGTGGTGGCGTGGGAAGTGGCGGCGGCATTCCTGGAAAAGTTCGGCGGCGACTCGATGGAGGAAATCCGCGCGAATTACGAGCATTATCTGGAGCAAATGAGGAAGTACTGA",
+      "parent_gene": "Ga0065724_100001.1029_gene",
+      "size": 1161,
+      "functional_descriptions": null,
+      "warnings": null,
+      "feature_type": "CDS",
+      "global_location": {
+        "contig_id": "Ga0065724_100001",
+        "start": 297548,
+        "stop": 1161,
+        "strand": "-"
+      },
+      "aliases": {},
+      "function": null,
+      "ontology_terms": {}
+    },
+    {
+      "location": [
+        {
+          "contig_id": "Ga0065724_100001",
+          "start": 298583,
+          "stop": 777,
+          "strand": "-"
+        }
+      ],
+      "feature_id": "Ga0065724_100001.1032",
+      "dna_sequence": "ATGGAAGACATGGACTACGCGCTTTTTGTCCGCAAGGTGAAGGAACATCTCGACCTGGATTTGTCCAGCTACAAGGAAACGCAGATGAAGCGGCGGCTGACGTCGCTGCGGGAGCGGCGGGGGTTTTCCACCTTCGCCGCCTATTTCAAGGCGCTGATGCAGGACGAGCGCCTGCTGGCGGAATTCAGGGACCGGGTGACGATCAACGTTTCCGAATTCTGGCGCAATCCCGGCCGCTGGGAAGTGCTGGAAAGCCGCTTCCTGCCGGAACTGGCGGCTTCCTCCCGGCGTCTCCGGTGCTGGAGCGCGGCGTGCTCCACGGGGGAAGAGCCGTACACGCTGGCCATGATTCTGGACCGGCACGGCATCCGCAACGCGGAAATCCGGGCGACGGACATCGACGCCGGCGTGCTGGAGAAGGCGAAGGCCGGGCGGTACGCGGAGCGGTCGGTGCGGGACGTGCCGAAACACTATCTGGATGCCTATTTCGTGAAGGACGGCGGGGAATACGTCGTCATCGACAGGCTGAAACGCATGGTCCGGTTCGAGCAGGGGGACCTGCTGCAGGACCCGTTCGGGAGGGACCATGACCTGATCATCTGCCGGAATGTGATGATCTATTTCACGGAACCGGCGAAGCGGGAGCTGTACCGCCGCCTGGCGGATGCCCTGAAGCCCGGGGGCATCCTGTTCGTCGGCAGCACGGAGCAGATTTTCACGCCGGCGCAATACGGGCTGGAAGCGGCGGATTCCTTCTTCTACCGGAAGAAAGGATAG",
+      "parent_gene": "Ga0065724_100001.1032_gene",
+      "size": 777,
+      "functional_descriptions": null,
+      "warnings": null,
+      "feature_type": "CDS",
+      "global_location": {
+        "contig_id": "Ga0065724_100001",
+        "start": 298583,
+        "stop": 777,
+        "strand": "-"
+      },
+      "aliases": {},
+      "function": null,
+      "ontology_terms": {}
+    },
+    {
+      "location": [
+        {
+          "contig_id": "Ga0065724_100001",
+          "start": 298583,
+          "stop": 777,
+          "strand": "-"
+        }
+      ],
+      "feature_id": "Ga0065724_100001.1032_gene",
+      "dna_sequence": "ATGGAAGACATGGACTACGCGCTTTTTGTCCGCAAGGTGAAGGAACATCTCGACCTGGATTTGTCCAGCTACAAGGAAACGCAGATGAAGCGGCGGCTGACGTCGCTGCGGGAGCGGCGGGGGTTTTCCACCTTCGCCGCCTATTTCAAGGCGCTGATGCAGGACGAGCGCCTGCTGGCGGAATTCAGGGACCGGGTGACGATCAACGTTTCCGAATTCTGGCGCAATCCCGGCCGCTGGGAAGTGCTGGAAAGCCGCTTCCTGCCGGAACTGGCGGCTTCCTCCCGGCGTCTCCGGTGCTGGAGCGCGGCGTGCTCCACGGGGGAAGAGCCGTACACGCTGGCCATGATTCTGGACCGGCACGGCATCCGCAACGCGGAAATCCGGGCGACGGACATCGACGCCGGCGTGCTGGAGAAGGCGAAGGCCGGGCGGTACGCGGAGCGGTCGGTGCGGGACGTGCCGAAACACTATCTGGATGCCTATTTCGTGAAGGACGGCGGGGAATACGTCGTCATCGACAGGCTGAAACGCATGGTCCGGTTCGAGCAGGGGGACCTGCTGCAGGACCCGTTCGGGAGGGACCATGACCTGATCATCTGCCGGAATGTGATGATCTATTTCACGGAACCGGCGAAGCGGGAGCTGTACCGCCGCCTGGCGGATGCCCTGAAGCCCGGGGGCATCCTGTTCGTCGGCAGCACGGAGCAGATTTTCACGCCGGCGCAATACGGGCTGGAAGCGGCGGATTCCTTCTTCTACCGGAAGAAAGGATAG",
+      "parent_gene": null,
+      "size": 777,
+      "functional_descriptions": null,
+      "warnings": [
+        "This gene was not in the source GenBank or GFF file. It was added to be the parent of a CDS."
+      ],
+      "feature_type": "gene",
+      "global_location": {
+        "contig_id": "Ga0065724_100001",
+        "start": 298583,
+        "stop": 777,
+        "strand": "-"
+      },
+      "aliases": {},
+      "function": null,
+      "ontology_terms": {}
+    },
+    {
+      "location": [
+        {
+          "contig_id": "Ga0065724_100001",
+          "start": 299049,
+          "stop": 444,
+          "strand": "-"
+        }
+      ],
+      "feature_id": "Ga0065724_100001.1035",
+      "dna_sequence": "ATGGAAAGAACGTTTCTCATGATCAAGCCGGACGGCGTGCAGCGCGGCCTCGTCGGCGAAATCATCGGACGCTTCGAACGGAAGGGGTTTCAGCTGGCGGGCATGAAGCTGATGCGGATCACGCGGGAACTGGCCGAACGCCACTACGCGGAGCATGCCGGCAAGCCGTTCTATGAAAGCCTGATTTCTTTCATCACATCCGGGCCGGTGGTGGCCATGGTGTGGCGGGGAGACGGCGTCATCGCCCAGGCCCGCGCGATGATGGGCAAGACGAATCCGCAGGAAGCGGCGCCGGGCACCATCCGCGGCGACTATGGCGTCCACACGGGCTTCAATCTCATCCACGGATCGGATTCCCCGGAAAGCGCCGAGCGGGAAATCCGGCTGTTCTTCCGGGACGAGGAACTGGTCGATTACGCGCGGGCCCTTGACGCATGGATCTGA",
+      "parent_gene": "Ga0065724_100001.1035_gene",
+      "size": 444,
+      "functional_descriptions": null,
+      "warnings": null,
+      "feature_type": "CDS",
+      "global_location": {
+        "contig_id": "Ga0065724_100001",
+        "start": 299049,
+        "stop": 444,
+        "strand": "-"
+      },
+      "aliases": {},
+      "function": null,
+      "ontology_terms": {}
+    }
+  ]
+}
