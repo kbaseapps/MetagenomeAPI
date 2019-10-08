@@ -159,7 +159,7 @@ module MetagenomeAPI {
         list<string> warnings;
         string parent_gene;
         int size;
-        string functional_descriptions;
+        list<string> functional_descriptions;
         mapping<string, list<string>> aliases;
         string function;
         list<Location> location;
