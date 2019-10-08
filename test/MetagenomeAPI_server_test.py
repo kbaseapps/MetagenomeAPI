@@ -155,7 +155,8 @@ class MetagenomeAPITest(unittest.TestCase):
 
     # @unittest.skip('x')
     def test_get_contig_info(self):
-        """
+        """test the 'get_contig_info' function
+        NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         ref = "43655/58/1"
         params = {
