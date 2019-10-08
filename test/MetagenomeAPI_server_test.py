@@ -168,6 +168,8 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertTrue('length' in ret['contig'])
         self.assertTrue('contig_id' in ret['contig'])
         self.assertTrue('feature_count' in ret['contig'])
+        check = {'contig': {'contig_id': "Ga0065724_100164", 'length': 28310, 'feature_count': 60}}
+        self.assertEquals(ret, check)
 
     # @unittest.skip('x')
     def test_search_contigs(self):
