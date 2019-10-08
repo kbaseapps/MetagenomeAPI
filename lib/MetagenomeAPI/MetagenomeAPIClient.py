@@ -220,6 +220,20 @@ class MetagenomeAPI(object):
         return self._client.call_method('MetagenomeAPI.search_contigs',
                                         [params], self._service_ver, context)
 
+    def get_contig_info(self, params, context=None):
+        """
+        :param params: instance of type "GetContigInfoParams" -> structure:
+           parameter "ref" of String, parameter "contig_id" of String
+        :returns: instance of type "GetContigInfoResult" -> structure:
+           parameter "contig" of type "contig" (contig_id - identifier of
+           contig feature_count - number of features associated with contig
+           length - the dna sequence length of the contig) -> structure:
+           parameter "contig_id" of String, parameter "feature_count" of
+           Long, parameter "length" of Long
+        """
+        return self._client.call_method('MetagenomeAPI.get_contig_info',
+                                        [params], self._service_ver, context)
+
     def status(self, context=None):
         return self._client.call_method('MetagenomeAPI.status',
                                         [], self._service_ver, context)

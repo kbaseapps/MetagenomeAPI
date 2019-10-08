@@ -261,4 +261,15 @@ module MetagenomeAPI {
 
     funcdef search_contigs(SearchContigsOptions params) returns (SearchContigsResult result) authentication required;
 
+    typedef structure {
+        string ref;
+        string contig_id;
+    } GetContigInfoParams;
+
+    typedef structure {
+        contig contig;
+    } GetContigInfoResult;
+
+    funcdef get_contig_info(GetContigInfoParams params) returns (GetContigInfoResult result) authentication required;
+
 };
