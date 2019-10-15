@@ -31,6 +31,10 @@ class MetagenomeSearchUtils:
 
     def search_contig_feature_counts(self, token, ref, num_contigs):
         """
+        Finds all contig feature counts for a provided AnnotatedMetagneomeAssembly object reference
+        token         - workspace authentication token
+        ref           - workspace object reference
+        num_contigs   - number of contigs in object.
         """
         (workspace_id, object_id, version) = ref.split('/')
         # we use namespace 'WSVER' for versioned elasticsearch index.
@@ -196,7 +200,15 @@ class MetagenomeSearchUtils:
                 "query": params,
                 "features": [self._process_feature(h['_source']) for h in hits]
             }
+        elif resp.get('hits'):
+            return {
+                "num_found": int(resp['hits']['total']),
+                "start": start,
+                "query": params,
+                "features": []
+            }
         else:
+            # only raise if no hits found at highest level.
             raise RuntimeError(f"no 'hits' with params {json.dumps(params)}\n in http response: {resp}")
 
     def _process_feature(self, hit_source):

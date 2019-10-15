@@ -5,6 +5,7 @@ from MetagenomeAPI.BinnedContigsIndexer import BinnedContigsIndexer
 from Workspace.WorkspaceClient import Workspace
 from MetagenomeAPI.AMAUtils import AMAUtils
 from MetagenomeAPI.MetagenomeSearchUtils import MetagenomeSearchUtils
+from MetagenomeAPI.CachingUtils import CachingUtils
 #END_HEADER
 
 
@@ -315,72 +316,59 @@ class MetagenomeAPI:
             raise RuntimeError("'sort_by' argument can only contain one "
                                "of 'length', 'contig_id', or 'feature_count'")
 
-        ws = Workspace(self.config['workspace-url'], token=ctx['token'])
-        ama_utils = AMAUtils(ws)
-        params['included_fields'] = ['contig_ids', 'contig_lengths']
-        ama = ama_utils.get_annotated_metagenome_assembly(params)['genomes'][0]
-        data = ama['data']
-        if len(data['contig_ids']) != len(data['contig_lengths']):
-          raise RuntimeError(f"contig ids (size: {len(data['contig_ids'])}) and contig "
-                             f"lengths (size: {len(data['contig_lengths'])}) sizes do not match.")
-        contig_ids = data['contig_ids']
-        contig_lengths = data['contig_lengths']
-
-        range_start = params['start']
-        range_end = params['start'] + params['limit']
-
-        if sort_by[0] == 'contig_id' and sort_by[1] == 0:
-          contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
-        elif sort_by[0] == 'length':
-          contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
-        elif sort_by[0] == 'feature_count':
-          # first sort by lengths
-          contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
-          width = int(params['limit']/2)
-
-          range_start = max(range_start - width, 0)
-          range_end = min(range_end + width, len(contig_ids))
-
-        # get feature_counts
-        feature_counts = self.msu.search_contig_feature_counts(ctx["token"],
-                                params.get("ref"),
-                                len(contig_ids))
-
-        contigs = [
-          {
-            "contig_id": contig_ids[i],
-            "feature_count": feature_counts.get(contig_ids[i], 0),
-            "length": contig_lengths[i]
-          }
-          for i in range(range_start, range_end)
-        ]
-        # for i in range(range_start, range_end):
-        #   # not a great solution, but works for now.
-        #   if i < len(contig_ids) or i >= 0:
-        #     contig_id = contig_ids[i]
-        #     contig_length = contig_lengths[i]
-        #     feature_count = self.msu.search_contig_feature_count(ctx["token"],
-        #                                   params.get("ref"),
-        #                                   contig_id,
-        #                                   params.get("start"),
-        #                                   params.get("limit"))
-        #     contig_data = {
-        #       "contig_id": contig_id,
-        #       "feature_count": feature_count,
-        #       "length": contig_length
-        #     }
-        #     contigs.append(contig_data)
-
-        # not ideal, but will work for now...
-        if sort_by[0] == 'feature_count':
-          contigs = sorted(contigs, key=lambda x: x['feature_count'], reverse=sort_by[1] == 0)
-          contigs = contigs[max(0, params['start']):min(len(contigs),params['start'] + params['limit'])]
-
-        result =  {
-          "contigs": contigs,
-          "num_found": len(data['contig_ids']),
-          "start": params['start']
+        # first check if exact args have been used with caching service...
+        caching = CachingUtils(self.config)
+        cache_data = {
+          "ref": params['ref'],
+          "start": params['start'],
+          "limit": params['limit'],
+          "sort_by": sort_by
         }
+        cache_id = caching.get_cache_id(ctx['token'], cache_data)
+        result = caching.download_cache_string(ctx['token'], cache_id)
+        if not result or not result.strip():
+
+          ws = Workspace(self.config['workspace-url'], token=ctx['token'])
+          ama_utils = AMAUtils(ws)
+          params['included_fields'] = ['contig_ids', 'contig_lengths']
+          ama = ama_utils.get_annotated_metagenome_assembly(params)['genomes'][0]
+          data = ama['data']
+          if len(data['contig_ids']) != len(data['contig_lengths']):
+            raise RuntimeError(f"contig ids (size: {len(data['contig_ids'])}) and contig "
+                               f"lengths (size: {len(data['contig_lengths'])}) sizes do not match.")
+          contig_ids = data['contig_ids']
+          contig_lengths = data['contig_lengths']
+
+          feature_counts = self.msu.search_contig_feature_counts(ctx["token"],
+                                  params.get("ref"),
+                                  len(contig_ids))
+
+          if sort_by[0] == 'contig_id' and sort_by[1] == 0:
+            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
+          elif sort_by[0] == 'length':
+            contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
+          elif sort_by[0] == 'feature_count':
+            # sort the contig_ids  and contig_lengths by feature_counts
+            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=sort_by[1] == 0, key=lambda x: feature_counts[x[0]])))
+          # get feature_counts
+          range_start = params['start']
+          range_end = params['start'] + params['limit']
+
+          contigs = [
+            {
+              "contig_id": contig_ids[i],
+              "feature_count": feature_counts.get(contig_ids[i], 0),
+              "length": contig_lengths[i]
+            }
+            for i in range(range_start, range_end)
+          ]
+          result =  {
+            "contigs": contigs,
+            "num_found": len(data['contig_ids']),
+            "start": params['start']
+          }
+          # now cache answer for future.
+          caching.upload_to_cache(ctx['token'] ,cache_id, result)
         #END search_contigs
 
         # At some point might do deeper type checking...
