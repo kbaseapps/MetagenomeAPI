@@ -37,7 +37,7 @@ class CachingUtils:
 
     def download_cache_string(self, token, cache_id):
         """
-        Fetch cached data as a string. Returns none if the cache does not exist.
+        Fetch cached data as string. Returns none if the cache does not exist.
         """
         endpoint = self.caching_service_url + '/cache/' + cache_id
         print('attempting to download cache', cache_id)

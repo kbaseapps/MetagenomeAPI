@@ -369,6 +369,9 @@ class MetagenomeAPI:
           }
           # now cache answer for future.
           caching.upload_to_cache(ctx['token'] ,cache_id, result)
+        else:
+          # load as json
+          result = json.loads(result)
         #END search_contigs
 
         # At some point might do deeper type checking...
