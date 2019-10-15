@@ -6,6 +6,8 @@ from Workspace.WorkspaceClient import Workspace
 from MetagenomeAPI.AMAUtils import AMAUtils
 from MetagenomeAPI.MetagenomeSearchUtils import MetagenomeSearchUtils
 from MetagenomeAPI.CachingUtils import CachingUtils
+
+import json
 #END_HEADER
 
 
