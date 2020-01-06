@@ -12,7 +12,15 @@ class MetagenomeSearchUtils:
             self.search_url = config.get('search-url')
         else:
             self.search_url = config.get('kbase-endpoint') + '/searchapi2/rpc'
-
+        # check if server is active.
+        resp = requests.get(config.get('kbase-endpoint') + '/searchapi2')
+        if resp.get('status'):
+            if resp['status'] == 'ok':
+                self.status_good = True
+            else:
+                self.status_good = False
+        else:
+            self.status_good = False
         self.debug = config.get("debug") == "1"
         self.max_sort_mem_size = 250000
 
@@ -36,6 +44,8 @@ class MetagenomeSearchUtils:
         ref           - workspace object reference
         num_contigs   - number of contigs in object.
         """
+        if not self.status_good:
+            return {}
         (workspace_id, object_id, version) = ref.split('/')
         # we use namespace 'WSVER' for versioned elasticsearch index.
         ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'

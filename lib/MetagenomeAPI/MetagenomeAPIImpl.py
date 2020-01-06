@@ -116,14 +116,17 @@ class MetagenomeAPI:
         # ctx is the context object
         # return variables are: result
         #BEGIN search_contigs_in_bin
-        result = self.indexer.search_contigs_in_bin(ctx["token"],
-                                                    params.get("ref", None),
-                                                    params.get("bin_id", None),
-                                                    params.get("query", None),
-                                                    params.get("sort_by", None),
-                                                    params.get("start", None),
-                                                    params.get("limit", None),
-                                                    params.get("num_found", None))
+        if self.msu.status_good:
+          result = self.indexer.search_contigs_in_bin(ctx["token"],
+                                                      params.get("ref", None),
+                                                      params.get("bin_id", None),
+                                                      params.get("query", None),
+                                                      params.get("sort_by", None),
+                                                      params.get("start", None),
+                                                      params.get("limit", None),
+                                                      params.get("num_found", None))
+        else:
+          result = {}
         #END search_contigs_in_bin
 
         # At some point might do deeper type checking...
@@ -203,8 +206,11 @@ class MetagenomeAPI:
         # ctx is the context object
         # return variables are: result
         #BEGIN search
-        result = self.msu.search(ctx['token'], params.get('ref'), params.get('start'),
-                                 params.get('limit'), params.get('sort_by'), params.get('query'))
+        if self.msu.status_good:
+          result = self.msu.search(ctx['token'], params.get('ref'), params.get('start'),
+                                   params.get('limit'), params.get('sort_by'), params.get('query'))
+        else:
+          result = {"features": []}
         #END search
 
         # At some point might do deeper type checking...
@@ -262,14 +268,17 @@ class MetagenomeAPI:
         # ctx is the context object
         # return variables are: result
         #BEGIN search_region
-        result = self.msu.search_region(ctx["token"],
-                                        params.get("ref", None),
-                                        params.get("contig_id", None),
-                                        params.get("region_start", None),
-                                        params.get("region_length", None),
-                                        params.get("page_start", None),
-                                        params.get("page_limit", None),
-                                        params.get("sort_by", None))
+        if self.msu.status_good:
+          result = self.msu.search_region(ctx["token"],
+                                          params.get("ref", None),
+                                          params.get("contig_id", None),
+                                          params.get("region_start", None),
+                                          params.get("region_length", None),
+                                          params.get("page_start", None),
+                                          params.get("page_limit", None),
+                                          params.get("sort_by", None))
+        else:
+          result = {'features': []}
         #END search_region
 
         # At some point might do deeper type checking...
@@ -340,37 +349,42 @@ class MetagenomeAPI:
                                f"lengths (size: {len(data['contig_lengths'])}) sizes do not match.")
           contig_ids = data['contig_ids']
           contig_lengths = data['contig_lengths']
+          if self.msu.status_good:
+            feature_counts = self.msu.search_contig_feature_counts(ctx["token"],
+                                    params.get("ref"),
+                                    len(contig_ids))
+            if sort_by[0] == 'contig_id' and sort_by[1] == 0:
+              contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
+            elif sort_by[0] == 'length':
+              contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
+            elif sort_by[0] == 'feature_count':
+              # sort the contig_ids  and contig_lengths by feature_counts
+              contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=sort_by[1] == 0, key=lambda x: feature_counts[x[0]])))
+            # get feature_counts
+            range_start = params['start']
+            range_end = params['start'] + params['limit']
 
-          feature_counts = self.msu.search_contig_feature_counts(ctx["token"],
-                                  params.get("ref"),
-                                  len(contig_ids))
-
-          if sort_by[0] == 'contig_id' and sort_by[1] == 0:
-            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
-          elif sort_by[0] == 'length':
-            contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
-          elif sort_by[0] == 'feature_count':
-            # sort the contig_ids  and contig_lengths by feature_counts
-            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=sort_by[1] == 0, key=lambda x: feature_counts[x[0]])))
-          # get feature_counts
-          range_start = params['start']
-          range_end = params['start'] + params['limit']
-
-          contigs = [
-            {
-              "contig_id": contig_ids[i],
-              "feature_count": feature_counts.get(contig_ids[i], 0),
-              "length": contig_lengths[i]
+            contigs = [
+              {
+                "contig_id": contig_ids[i],
+                "feature_count": feature_counts.get(contig_ids[i], 0),
+                "length": contig_lengths[i]
+              }
+              for i in range(range_start, range_end)
+            ]
+            result =  {
+              "contigs": contigs,
+              "num_found": len(data['contig_ids']),
+              "start": params['start']
             }
-            for i in range(range_start, range_end)
-          ]
-          result =  {
-            "contigs": contigs,
-            "num_found": len(data['contig_ids']),
-            "start": params['start']
-          }
-          # now cache answer for future.
-          caching.upload_to_cache(ctx['token'] ,cache_id, result)
+            # now cache answer for future.
+            caching.upload_to_cache(ctx['token'] ,cache_id, result)
+          else:
+            result = {
+              "contigs": [],
+              "num_found": 0,
+              "start": params['start']
+            }
         else:
           # load as json
           result = json.loads(result)
@@ -386,13 +400,13 @@ class MetagenomeAPI:
     def get_contig_info(self, ctx, params):
         """
         :param params: instance of type "GetContigInfoParams" -> structure:
-           parameter "ref" of String, parameter "contig_id" of String
+            parameter "ref" of String, parameter "contig_id" of String
         :returns: instance of type "GetContigInfoResult" -> structure:
-           parameter "contig" of type "contig" (contig_id - identifier of
-           contig feature_count - number of features associated with contig
-           length - the dna sequence length of the contig) -> structure:
-           parameter "contig_id" of String, parameter "feature_count" of
-           Long, parameter "length" of Long
+            parameter "contig" of type "contig" (contig_id - identifier of
+            contig feature_count - number of features associated with contig
+            length - the dna sequence length of the contig) -> structure:
+            parameter "contig_id" of String, parameter "feature_count" of
+            Long, parameter "length" of Long
         """
         # ctx is the context object
         # return variables are: result
@@ -412,16 +426,25 @@ class MetagenomeAPI:
           if c == contig_id:
             length = contig_lengths[i]
             break
-        feature_count = self.msu.search_contig_feature_count(ctx["token"],
-                                params.get("ref"),
-                                contig_id)
-        result = {
-          'contig': {
-            "contig_id": contig_id,
-            "length": length,
-            "feature_count": feature_count
+        if self.msu.status_good
+          feature_count = self.msu.search_contig_feature_count(ctx["token"],
+                                  params.get("ref"),
+                                  contig_id)
+          result = {
+            'contig': {
+              "contig_id": contig_id,
+              "length": length,
+              "feature_count": feature_count
+            }
           }
-        }
+        else:
+          result = {
+            'contig': {
+              "contig_id": contig_id,
+              "length": length,
+              "feature_count": 0
+            }
+          }
         #END get_contig_info
 
         # At some point might do deeper type checking...
