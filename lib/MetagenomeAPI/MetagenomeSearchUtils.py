@@ -14,8 +14,11 @@ class MetagenomeSearchUtils:
             self.search_url = config.get('kbase-endpoint') + '/searchapi2/rpc'
         # check if server is active.
         resp = requests.get(config.get('kbase-endpoint') + '/searchapi2')
-        if resp.get('status'):
-            if resp['status'] == 'ok':
+        if not resp.ok:
+            self.status_good = False
+        resp_json = resp.json()
+        if resp_json.get('status'):
+            if resp_json['status'] == 'ok':
                 self.status_good = True
             else:
                 self.status_good = False

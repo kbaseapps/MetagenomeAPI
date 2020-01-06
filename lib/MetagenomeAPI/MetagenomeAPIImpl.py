@@ -353,6 +353,9 @@ class MetagenomeAPI:
             feature_counts = self.msu.search_contig_feature_counts(ctx["token"],
                                     params.get("ref"),
                                     len(contig_ids))
+            # print('+'*80)
+            # print("feature count length: ",len(feature_counts.keys()))
+            # print('+'*80)
             if sort_by[0] == 'contig_id' and sort_by[1] == 0:
               contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
             elif sort_by[0] == 'length':
@@ -426,7 +429,7 @@ class MetagenomeAPI:
           if c == contig_id:
             length = contig_lengths[i]
             break
-        if self.msu.status_good
+        if self.msu.status_good:
           feature_count = self.msu.search_contig_feature_count(ctx["token"],
                                   params.get("ref"),
                                   contig_id)

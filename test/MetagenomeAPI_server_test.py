@@ -171,7 +171,7 @@ class MetagenomeAPITest(unittest.TestCase):
         check = {'contig': {'contig_id': "Ga0065724_100164", 'length': 28310, 'feature_count': 60}}
         self.assertEquals(ret, check)
 
-    # @unittest.skip('x')
+    @unittest.skip('x')
     def test_search_contigs(self):
         """test the 'search_contigs' function
         NOTE: This test is tied to a version of workspace object in elasticsearch.
