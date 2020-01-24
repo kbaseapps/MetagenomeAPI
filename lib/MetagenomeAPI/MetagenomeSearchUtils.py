@@ -80,7 +80,7 @@ class MetagenomeSearchUtils:
                             f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
         respj = resp.json()
         return {
-            b['key']: b['doc_count'] for b in respj['aggregations']['group_by_state']['buckets']
+            b['key']: b['count'] for b in respj['result']['aggregations']['group_by_state']['counts']
         }
 
     def search_region(self, token, ref, contig_id, region_start, region_length, start, limit, sort_by):
@@ -196,7 +196,7 @@ class MetagenomeSearchUtils:
             raise Exception(f"Not able to complete search request against {self.search_url} "
                             f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
         respj = resp.json()
-        return self._process_resp(respj, start, params)
+        return self._process_resp(respj['result'], start, params)
 
     def _process_resp(self, resp, start, params):
         """
@@ -216,6 +216,14 @@ class MetagenomeSearchUtils:
         elif resp.get('hits'):
             return {
                 "num_found": int(resp['hits']['total']),
+                "start": start,
+                "query": params,
+                "features": []
+            }
+        # empty list in reponse for hits
+        elif 'hits' in resp:
+            return {
+                "num_found": 0,
                 "start": start,
                 "query": params,
                 "features": []
