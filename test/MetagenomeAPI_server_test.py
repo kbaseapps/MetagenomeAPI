@@ -192,6 +192,7 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertTrue('start' in ret)
         self.assertTrue('num_found' in ret)
         self.assertEquals(len(ret['contigs']), 10)
+        self.assertTrue(sum([c['feature_count'] for c in ret['contigs']]) > 0)
         self.assertEquals([c['length'] for c in ret['contigs']],
                           sorted([c['length'] for c in ret['contigs']], reverse=True))
         # sort by 'contig_id'
@@ -208,6 +209,7 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertTrue('start' in ret)
         self.assertTrue('num_found' in ret)
         self.assertEquals(len(ret['contigs']), 10)
+        self.assertTrue(sum([c['feature_count'] for c in ret['contigs']]) > 0)
         self.assertEquals([c['contig_id'] for c in ret['contigs']],
                           sorted([c['contig_id'] for c in ret['contigs']]))
         # sort by 'feature_count'
@@ -224,6 +226,7 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertTrue('start' in ret)
         self.assertTrue('num_found' in ret)
         self.assertEquals(len(ret['contigs']), 10)
+        self.assertTrue(sum([c['feature_count'] for c in ret['contigs']]) > 0)
         self.assertEquals([c['feature_count'] for c in ret['contigs']],
                           sorted([c['feature_count'] for c in ret['contigs']], reverse=True))
 
