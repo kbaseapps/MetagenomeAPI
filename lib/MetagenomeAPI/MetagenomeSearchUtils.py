@@ -212,7 +212,7 @@ class MetagenomeSearchUtils:
                 "start": start,
                 "query": params,
                 # this should handle empty results list of hits, also sort by feature_id
-                "features": sorted([self._process_feature(h['doc']) for h in hits], key=lambda x: x['feature_id'])
+                "features": [self._process_feature(h['doc']) for h in hits]
             }
         # empty list in reponse for hits
         elif 'hits' in resp:
