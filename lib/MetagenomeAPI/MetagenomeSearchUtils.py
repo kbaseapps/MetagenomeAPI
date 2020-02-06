@@ -80,7 +80,7 @@ class MetagenomeSearchUtils:
                             f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
         respj = resp.json()
         return {
-            b['key']: b['doc_count'] for b in respj['aggregations']['group_by_state']['buckets']
+            b['key']: b['count'] for b in respj['result']['aggregations']['group_by_state']['counts']
         }
 
     def search_region(self, token, ref, contig_id, region_start, region_length, start, limit, sort_by):
@@ -196,7 +196,7 @@ class MetagenomeSearchUtils:
             raise Exception(f"Not able to complete search request against {self.search_url} "
                             f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
         respj = resp.json()
-        return self._process_resp(respj, start, params)
+        return self._process_resp(respj['result'], start, params)
 
     def _process_resp(self, resp, start, params):
         """
@@ -205,17 +205,19 @@ class MetagenomeSearchUtils:
         start  - integer start of pagination
         params - parameters used to search against SearchAPI2
         """
-        if resp.get('hits') and resp['hits'].get('hits'):
-            hits = resp['hits']['hits']
+        if resp.get('hits'):
+            hits = resp['hits']
             return {
-                "num_found": int(resp['hits']['total']),
+                "num_found": int(resp['count']),
                 "start": start,
                 "query": params,
-                "features": [self._process_feature(h['_source']) for h in hits]
+                # this should handle empty results list of hits, also sort by feature_id
+                "features": [self._process_feature(h['doc']) for h in hits]
             }
-        elif resp.get('hits'):
+        # empty list in reponse for hits
+        elif 'hits' in resp:
             return {
-                "num_found": int(resp['hits']['total']),
+                "num_found": int(resp['count']),
                 "start": start,
                 "query": params,
                 "features": []

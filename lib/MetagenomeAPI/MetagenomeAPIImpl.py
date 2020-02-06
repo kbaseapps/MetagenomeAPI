@@ -362,7 +362,7 @@ class MetagenomeAPI:
               contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
             elif sort_by[0] == 'feature_count':
               # sort the contig_ids  and contig_lengths by feature_counts
-              contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=sort_by[1] == 0, key=lambda x: feature_counts[x[0]])))
+              contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=sort_by[1] == 0, key=lambda x: feature_counts.get(x[0], 0))))
             # get feature_counts
             range_start = params['start']
             range_end = params['start'] + params['limit']
