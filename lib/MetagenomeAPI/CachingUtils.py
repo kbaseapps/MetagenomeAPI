@@ -2,11 +2,20 @@ import json
 import requests
 
 class CachingUtils:
+    # looks here for CachingService docs: https://github.com/kbase/cachingservice
     def __init__(self, config):
         if config.get('caching_service_url'):
             self.caching_service_url = config['caching_service_url']
         else:
             self.caching_service_url = config.get('kbase-endpoint') + '/cache/v1'
+
+    def remove_cache(self, token, cache_id):
+        """Removed/delete Cache"""
+        print(f"Deleting Cache with id {cache_id}")
+        endpoint = self.caching_service_url + "/cache/" + cache_id
+        resp = requests.delete(endpoint, headers={"Authorization": token})
+        print(f'Response of {resp.ok} from deleting cache_id {cache_id}')
+        return resp.ok
 
     def upload_to_cache(self, token, cache_id, data):
         """Save string content to a cache."""
@@ -20,7 +29,7 @@ class CachingUtils:
             headers={'Authorization': token}
         )
         resp_json = resp.json()
-        print('status is', resp_json['status'])
+        print(f"status is {resp_json['status']}\n")
         if resp_json['status'] == 'error':
             raise Exception(resp_json['error'])
 

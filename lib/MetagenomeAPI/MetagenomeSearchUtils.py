@@ -4,6 +4,69 @@ import os
 import requests
 import time
 
+from MetagenomeAPI.AMAUtils import AMAUtils
+from Workspace.WorkspaceClient import Workspace
+
+def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching):
+    """
+    Function to get information about contigss
+    """
+    ws = Workspace(config['workspace-url'], token=ctx['token'])
+    ama_utils = AMAUtils(ws)
+    params['included_fields'] = ['contig_ids', 'contig_lengths']
+    ama = ama_utils.get_annotated_metagenome_assembly(params)['genomes'][0]
+    data = ama['data']
+    if len(data['contig_ids']) != len(data['contig_lengths']):
+        raise RuntimeError(f"contig ids (size: {len(data['contig_ids'])}) and contig "
+                           f"lengths (size: {len(data['contig_lengths'])}) sizes do not match.")
+    contig_ids = data['contig_ids']
+    contig_lengths = data['contig_lengths']
+    if msu.status_good:
+        feature_counts = msu.search_contig_feature_counts(ctx["token"],
+                                params.get("ref"),
+                                min(8000, max(4000, params['start'] + params['limit'])))
+                                # len(contig_ids))
+        if sort_by[0] == 'contig_id' and sort_by[1] == 0:
+            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
+        elif sort_by[0] == 'length':
+            contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
+        elif sort_by[0] == 'feature_count':
+            # sort the contig_ids  and contig_lengths by feature_counts
+            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=sort_by[1] == 0, key=lambda x: feature_counts.get(x[0], 0))))
+        # get feature_counts
+        range_start = params['start']
+        range_end = params['start'] + params['limit']
+
+        contigs = [
+            {
+                "contig_id": contig_ids[i],
+                "feature_count": feature_counts.get(
+                    contig_ids[i],
+                    msu.search_contig_feature_count(
+                        ctx["token"],
+                        params.get("ref"),
+                        contig_ids[i]
+                    )
+                ),
+                "length": contig_lengths[i]
+            }
+            for i in range(range_start, range_end)
+        ]
+        result =  {
+            "contigs": contigs,
+            "num_found": len(data['contig_ids']),
+            "start": params['start']
+        }
+        # now cache answer for future.
+        caching.upload_to_cache(ctx['token'], cache_id, result)
+    else:
+        result = {
+            "contigs": [],
+            "num_found": 0,
+            "start": params['start']
+        }
+    return result
+
 
 class MetagenomeSearchUtils:
 
@@ -40,12 +103,12 @@ class MetagenomeSearchUtils:
         # this will correspond to 'feature_count'
         return ret['num_found']
 
-    def search_contig_feature_counts(self, token, ref, num_contigs):
+    def search_contig_feature_counts(self, token, ref, num_results):
         """
         Finds all contig feature counts for a provided AnnotatedMetagneomeAssembly object reference
         token         - workspace authentication token
         ref           - workspace object reference
-        num_contigs   - number of contigs in object.
+        num_results   - number of results to return.
         """
         if not self.status_good:
             return {}
@@ -68,7 +131,7 @@ class MetagenomeSearchUtils:
                     "group_by_state": {
                         "terms": {
                             "field": "contig_ids",
-                            "size": num_contigs
+                            "size": num_results
                         },
                     }
                 }
