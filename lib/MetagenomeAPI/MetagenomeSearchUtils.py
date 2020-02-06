@@ -205,25 +205,19 @@ class MetagenomeSearchUtils:
         start  - integer start of pagination
         params - parameters used to search against SearchAPI2
         """
-        if resp.get('hits') and resp['hits'].get('hits'):
-            hits = resp['hits']['hits']
+        if resp.get('hits'):
+            hits = resp['hits']
             return {
-                "num_found": int(resp['hits']['total']),
+                "num_found": int(resp['count']),
                 "start": start,
                 "query": params,
-                "features": [self._process_feature(h['_source']) for h in hits]
-            }
-        elif resp.get('hits'):
-            return {
-                "num_found": int(resp['hits']['total']),
-                "start": start,
-                "query": params,
-                "features": []
+                # this should handle empty results list of hits, also sort by feature_id
+                "features": sorted([self._process_feature(h['doc']) for h in hits], key=lambda x: x['feature_id'])
             }
         # empty list in reponse for hits
         elif 'hits' in resp:
             return {
-                "num_found": 0,
+                "num_found": int(resp['count']),
                 "start": start,
                 "query": params,
                 "features": []
