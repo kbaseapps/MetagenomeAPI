@@ -7,6 +7,7 @@ import time
 from MetagenomeAPI.AMAUtils import AMAUtils
 from Workspace.WorkspaceClient import Workspace
 
+
 def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching):
     """
     Function to get information about contigss
@@ -99,7 +100,7 @@ class MetagenomeSearchUtils:
         """
         extra_must = [{'term': {'contig_ids': contig_id}}]
         # limit and size set to 1 to avoid needlessly unenforcing 'terminate_after' in search_api
-        ret = self._elastic_query(token, ref, 1, 1, [('id', 1)], extra_must=extra_must)
+        ret = self._elastic_query(token, ref, 1, 1, [('id', 1)], extra_must=extra_must, track_total_hits=True)
         # this will correspond to 'feature_count'
         return ret['num_found']
 
@@ -216,12 +217,12 @@ class MetagenomeSearchUtils:
             extra_must.append({'bool': {'should': shoulds}})
 
         t1 = time.time()
-        ret = self._elastic_query(token, ref, limit, start, sort_by, extra_must=extra_must)
+        ret = self._elastic_query(token, ref, limit, start, sort_by, extra_must=extra_must, track_total_hits=True)
         if self.debug:
             print(("    (overall-time=" + str(time.time() - t1) + ")"))
         return ret
 
-    def _elastic_query(self, token, ref, limit, start, sort_by, extra_must=[], aggs=None):
+    def _elastic_query(self, token, ref, limit, start, sort_by, extra_must=[], aggs=None, track_total_hits=False):
         """
         Perform the query against the Search API 2, to get results from elasticsearch.
         token      - workspace authentication token
@@ -247,11 +248,14 @@ class MetagenomeSearchUtils:
                 "indexes": ["annotated_metagenome_assembly_features_version"],
                 "from": start,
                 "size": limit,
-                "sort": [{s[0]: {"order": "asc" if s[1] else "desc"}} for s in sort_by]
+                "sort": [{s[0]: {"order": "asc" if s[1] else "desc"}} for s in sort_by],
+                "track_total_hits": track_total_hits
             }
         }
         if aggs:
             params['aggs'] = aggs
+        if track_total_hits:
+            params['track_total_hits'] = True
         # if self.debug:
         # print(f"querying {self.search_url}, with params: {json.dumps(params)}")
         resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
