@@ -1,3 +1,6 @@
+# 2.2.0
+- new 'get_feature_type_counts' function
+
 # 2.1.0
 - adding removal of caches for search_contig queries where feature_count sum is 0
 - non-determinism still needs addressing.
