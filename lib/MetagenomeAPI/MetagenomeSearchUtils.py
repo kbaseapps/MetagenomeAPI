@@ -90,6 +90,50 @@ class MetagenomeSearchUtils:
         self.debug = config.get("debug") == "1"
         self.max_sort_mem_size = 250000
 
+    def search_feature_counts_by_type(self, token, ref):
+        """
+        Given a reference to a versioned Annotated Metgenome Assembly,
+        gets the count of feature types.
+        """
+        if not self.status_good:
+            return {"status": "not_good"}
+        num_results = 500000  # adjust this number
+        aggs = {
+            "group_by_state": {
+                "terms": {
+                    "field": "type",
+                    "size": num_results
+                }
+            }
+        }
+        (workspace_id, object_id, version) = ref.split('/')
+        # we use namespace 'WSVER' for versioned elasticsearch index.
+        ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
+
+        headers = {"Authorization": token}
+        params = {
+            "method": "search_objects",
+            "params": {
+                "query": {
+                    "bool": {
+                        "must": [{"term": {"parent_id": ama_id}}]
+                    }
+                },
+                "indexes": ["annotated_metagenome_assembly_features_version"],
+                "size": 0,
+                "aggs": aggs
+            }
+        }
+        resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
+        if not resp.ok:
+            raise Exception(f"Not able to complete search request against {self.search_url} "
+                            f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
+        respj = resp.json()
+        return {
+            b['key']: b['count'] for b in respj['result']['aggregations']['group_by_state']['counts']
+        }
+
+
     def search_contig_feature_count(self, token, ref, contig_id):
         """
         Given a contig, find the number of features it has

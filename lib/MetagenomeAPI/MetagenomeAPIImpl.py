@@ -26,9 +26,9 @@ class MetagenomeAPI:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "1.1.0"
+    VERSION = "2.1.0"
     GIT_URL = "https://github.com/slebras/MetagenomeAPI.git"
-    GIT_COMMIT_HASH = "a98c0ad9824e7b33a46647a60c36493840b6487b"
+    GIT_COMMIT_HASH = "96fe4c35f687df13f1bfe9028e88982ffe085ba9"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
@@ -191,6 +191,9 @@ class MetagenomeAPI:
            feature_idx - field keeping the position of feature in its array
            in a Genome object, ontology_terms - mapping from term ID (key) to
            term name (value).) -> structure: parameter "feature_id" of
+           String, parameter "dna_sequence" of String, parameter "warnings"
+           of list of String, parameter "parent_gene" of String, parameter
+           "size" of Long, parameter "functional_descriptions" of list of
            String, parameter "aliases" of mapping from String to list of
            String, parameter "function" of String, parameter "location" of
            list of type "Location" -> structure: parameter "contig_id" of
@@ -253,13 +256,16 @@ class MetagenomeAPI:
            non_coding_features) feature_idx - field keeping the position of
            feature in its array in a Genome object, ontology_terms - mapping
            from term ID (key) to term name (value).) -> structure: parameter
-           "feature_id" of String, parameter "aliases" of mapping from String
-           to list of String, parameter "function" of String, parameter
-           "location" of list of type "Location" -> structure: parameter
-           "contig_id" of String, parameter "start" of Long, parameter
-           "strand" of String, parameter "length" of Long, parameter
-           "feature_type" of String, parameter "global_location" of type
-           "Location" -> structure: parameter "contig_id" of String,
+           "feature_id" of String, parameter "dna_sequence" of String,
+           parameter "warnings" of list of String, parameter "parent_gene" of
+           String, parameter "size" of Long, parameter
+           "functional_descriptions" of list of String, parameter "aliases"
+           of mapping from String to list of String, parameter "function" of
+           String, parameter "location" of list of type "Location" ->
+           structure: parameter "contig_id" of String, parameter "start" of
+           Long, parameter "strand" of String, parameter "length" of Long,
+           parameter "feature_type" of String, parameter "global_location" of
+           type "Location" -> structure: parameter "contig_id" of String,
            parameter "start" of Long, parameter "strand" of String, parameter
            "length" of Long, parameter "feature_array" of String, parameter
            "feature_idx" of Long, parameter "ontology_terms" of mapping from
@@ -359,13 +365,13 @@ class MetagenomeAPI:
     def get_contig_info(self, ctx, params):
         """
         :param params: instance of type "GetContigInfoParams" -> structure:
-            parameter "ref" of String, parameter "contig_id" of String
+           parameter "ref" of String, parameter "contig_id" of String
         :returns: instance of type "GetContigInfoResult" -> structure:
-            parameter "contig" of type "contig" (contig_id - identifier of
-            contig feature_count - number of features associated with contig
-            length - the dna sequence length of the contig) -> structure:
-            parameter "contig_id" of String, parameter "feature_count" of
-            Long, parameter "length" of Long
+           parameter "contig" of type "contig" (contig_id - identifier of
+           contig feature_count - number of features associated with contig
+           length - the dna sequence length of the contig) -> structure:
+           parameter "contig_id" of String, parameter "feature_count" of
+           Long, parameter "length" of Long
         """
         # ctx is the context object
         # return variables are: result
@@ -412,6 +418,32 @@ class MetagenomeAPI:
                              'result is not type dict as required.')
         # return the results
         return [result]
+
+    def get_feature_type_counts(self, ctx, params):
+        """
+        :param params: instance of type "GetFeatureTypeCountsParams" ->
+           structure: parameter "ref" of String
+        :returns: instance of type "GetFeatureTypeCountsResult" -> structure:
+           parameter "feature_type_counts" of mapping from String to Long
+        """
+        # ctx is the context object
+        # return variables are: result
+        #BEGIN get_feature_type_counts
+        if 'ref' not in params:
+          raise RuntimeError(f"'ref' argument required for get_contig_info")
+        feature_counts_by_type = self.msu.search_feature_counts_by_type(ctx['token'], params['ref'])
+        result = {
+          'feature_type_counts': feature_counts_by_type
+        }
+        #END get_feature_type_counts
+
+        # At some point might do deeper type checking...
+        if not isinstance(result, dict):
+            raise ValueError('Method get_feature_type_counts return value ' +
+                             'result is not type dict as required.')
+        # return the results
+        return [result]
+
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",

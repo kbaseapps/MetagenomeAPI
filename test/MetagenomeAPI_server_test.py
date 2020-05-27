@@ -154,6 +154,19 @@ class MetagenomeAPITest(unittest.TestCase):
         return '/'.join([str(obj_info[6]), str(obj_info[0]), str(obj_info[4])])
 
     # @unittest.skip('x')
+    def test_search_feature_counts_by_type(self):
+        """
+        """
+        self.maxDiff = None
+        ref = "43655/58/1"
+        params = {
+            "ref": ref
+        }
+        ret = self.getImpl().get_feature_type_counts(self.getContext(), params)[0]
+        check = {'feature_type_counts': {'CDS': 131854, 'gene': 131854, 'tRNA': 1024, 'repeat_region': 422, 'rRNA': 287}}
+        self.assertEquals(ret, check)
+
+    # @unittest.skip('x')
     def test_get_contig_info(self):
         """test the 'get_contig_info' function
         NOTE: This test is tied to a version of workspace object in elasticsearch.
@@ -247,7 +260,6 @@ class MetagenomeAPITest(unittest.TestCase):
             "sort_by": [("starts", 1), ('stops', 1)]
         }
         ret = self.getImpl().search_region(self.getContext(), params)[0]
-        # print(json.dumps(ret, indent=2))
         self.assertTrue('contig_id' in ret, msg=f"returned: {ret.keys()}")
         self.assertTrue('region_length' in ret, msg=f"returned: {ret.keys()}")
         self.assertTrue('features' in ret, msg=f"returned: {ret.keys()}")

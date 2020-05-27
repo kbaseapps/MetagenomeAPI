@@ -277,4 +277,14 @@ module MetagenomeAPI {
 
     funcdef get_contig_info(GetContigInfoParams params) returns (GetContigInfoResult result) authentication required;
 
+    typedef structure {
+        string ref;
+    } GetFeatureTypeCountsParams;
+
+    typedef structure {
+        mapping<string, int> feature_type_counts;
+    } GetFeatureTypeCountsResult;
+
+    funcdef get_feature_type_counts(GetFeatureTypeCountsParams params) returns (GetFeatureTypeCountsResult result) authentication required;
+
 };
