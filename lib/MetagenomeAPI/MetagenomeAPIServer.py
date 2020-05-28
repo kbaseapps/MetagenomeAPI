@@ -366,6 +366,10 @@ class Application(object):
                              name='MetagenomeAPI.get_contig_info',
                              types=[dict])
         self.method_authentication['MetagenomeAPI.get_contig_info'] = 'required'  # noqa
+        self.rpc_service.add(impl_MetagenomeAPI.get_feature_type_counts,
+                             name='MetagenomeAPI.get_feature_type_counts',
+                             types=[dict])
+        self.method_authentication['MetagenomeAPI.get_feature_type_counts'] = 'required'  # noqa
         self.rpc_service.add(impl_MetagenomeAPI.status,
                              name='MetagenomeAPI.status',
                              types=[dict])

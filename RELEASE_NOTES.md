@@ -1,3 +1,6 @@
+# 2.3.0
+- new 'get_feature_type_counts' function
+
 # 2.2.0
 - changing functionality of search. No longer limiting number of hits from elasticsearch
 

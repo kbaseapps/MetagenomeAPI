@@ -132,6 +132,9 @@ class MetagenomeAPI(object):
            feature_idx - field keeping the position of feature in its array
            in a Genome object, ontology_terms - mapping from term ID (key) to
            term name (value).) -> structure: parameter "feature_id" of
+           String, parameter "dna_sequence" of String, parameter "warnings"
+           of list of String, parameter "parent_gene" of String, parameter
+           "size" of Long, parameter "functional_descriptions" of list of
            String, parameter "aliases" of mapping from String to list of
            String, parameter "function" of String, parameter "location" of
            list of type "Location" -> structure: parameter "contig_id" of
@@ -180,13 +183,16 @@ class MetagenomeAPI(object):
            non_coding_features) feature_idx - field keeping the position of
            feature in its array in a Genome object, ontology_terms - mapping
            from term ID (key) to term name (value).) -> structure: parameter
-           "feature_id" of String, parameter "aliases" of mapping from String
-           to list of String, parameter "function" of String, parameter
-           "location" of list of type "Location" -> structure: parameter
-           "contig_id" of String, parameter "start" of Long, parameter
-           "strand" of String, parameter "length" of Long, parameter
-           "feature_type" of String, parameter "global_location" of type
-           "Location" -> structure: parameter "contig_id" of String,
+           "feature_id" of String, parameter "dna_sequence" of String,
+           parameter "warnings" of list of String, parameter "parent_gene" of
+           String, parameter "size" of Long, parameter
+           "functional_descriptions" of list of String, parameter "aliases"
+           of mapping from String to list of String, parameter "function" of
+           String, parameter "location" of list of type "Location" ->
+           structure: parameter "contig_id" of String, parameter "start" of
+           Long, parameter "strand" of String, parameter "length" of Long,
+           parameter "feature_type" of String, parameter "global_location" of
+           type "Location" -> structure: parameter "contig_id" of String,
            parameter "start" of Long, parameter "strand" of String, parameter
            "length" of Long, parameter "feature_array" of String, parameter
            "feature_idx" of Long, parameter "ontology_terms" of mapping from
@@ -232,6 +238,16 @@ class MetagenomeAPI(object):
            Long, parameter "length" of Long
         """
         return self._client.call_method('MetagenomeAPI.get_contig_info',
+                                        [params], self._service_ver, context)
+
+    def get_feature_type_counts(self, params, context=None):
+        """
+        :param params: instance of type "GetFeatureTypeCountsParams" ->
+           structure: parameter "ref" of String
+        :returns: instance of type "GetFeatureTypeCountsResult" -> structure:
+           parameter "feature_type_counts" of mapping from String to Long
+        """
+        return self._client.call_method('MetagenomeAPI.get_feature_type_counts',
                                         [params], self._service_ver, context)
 
     def status(self, context=None):
