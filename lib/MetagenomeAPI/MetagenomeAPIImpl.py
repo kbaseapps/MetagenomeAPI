@@ -26,9 +26,9 @@ class MetagenomeAPI:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "2.1.0"
-    GIT_URL = "https://github.com/slebras/MetagenomeAPI.git"
-    GIT_COMMIT_HASH = "96fe4c35f687df13f1bfe9028e88982ffe085ba9"
+    VERSION = "2.3.0"
+    GIT_URL = "https://github.com/kbaseapps/MetagenomeAPI.git"
+    GIT_COMMIT_HASH = "b325f4b288519a1719c680782c12a829edebcd45"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
@@ -443,7 +443,6 @@ class MetagenomeAPI:
                              'result is not type dict as required.')
         # return the results
         return [result]
-
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",
