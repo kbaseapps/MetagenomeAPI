@@ -70,7 +70,7 @@ def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching
 
 
 class MetagenomeSearchUtils:
-
+    """Utilities for Searching Annotated Metagenome Assemblies in the KBase Search API"""
     def __init__(self, config):
         if config.get('search-url'):
             self.search_url = config.get('search-url')
@@ -281,7 +281,7 @@ class MetagenomeSearchUtils:
         ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
 
         headers = {"Authorization": token}
-        params = {
+        query_data = {
             "method": "search_objects",
             "params": {
                 "query": {
@@ -292,22 +292,21 @@ class MetagenomeSearchUtils:
                 "indexes": ["annotated_metagenome_assembly_features_version"],
                 "from": start,
                 "size": limit,
-                "sort": [{s[0]: {"order": "asc" if s[1] else "desc"}} for s in sort_by],
-                "track_total_hits": track_total_hits
+                "sort": [{s[0]: {"order": "asc" if s[1] else "desc"}} for s in sort_by]
             }
         }
         if aggs:
-            params['aggs'] = aggs
+            query_data['params']['aggs'] = aggs
         if track_total_hits:
-            params['track_total_hits'] = True
-        # if self.debug:
-        # print(f"querying {self.search_url}, with params: {json.dumps(params)}")
-        resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
+            query_data['params']['track_total_hits'] = True
+        if self.debug:
+            print(f"querying {self.search_url}, with params: {json.dumps(params)}")
+        resp = requests.post(self.search_url, headers=headers, data=json.dumps(query_data))
         if not resp.ok:
             raise Exception(f"Not able to complete search request against {self.search_url} "
-                            f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
+                            f"with parameters: {json.dumps(query_data)} \nResponse body: {resp.text}")
         respj = resp.json()
-        return self._process_resp(respj['result'], start, params)
+        return self._process_resp(respj['result'], start, query_data)
 
     def _process_resp(self, resp, start, params):
         """
