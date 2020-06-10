@@ -1,3 +1,6 @@
+# 2.3.1
+- updating for new search_api compatability
+
 # 2.3.0
 - new 'get_feature_type_counts' function
 
