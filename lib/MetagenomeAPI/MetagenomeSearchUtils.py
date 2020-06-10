@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import uuid
 import os
 import requests
 import time
@@ -78,16 +79,7 @@ class MetagenomeSearchUtils:
             self.search_url = config.get('kbase-endpoint') + '/searchapi2/rpc'
         # check if server is active.
         resp = requests.get(config.get('kbase-endpoint') + '/searchapi2')
-        if not resp.ok:
-            self.status_good = False
-        resp_json = resp.json()
-        if resp_json.get('status'):
-            if resp_json['status'] == 'ok':
-                self.status_good = True
-            else:
-                self.status_good = False
-        else:
-            self.status_good = False
+        self.status_good = resp.ok
         self.debug = config.get("debug") == "1"
         self.max_sort_mem_size = 250000
 
@@ -123,7 +115,9 @@ class MetagenomeSearchUtils:
                 "indexes": ["annotated_metagenome_assembly_features_version"],
                 "size": 0,
                 "aggs": aggs
-            }
+            },
+            "jsonrpc": "2.0",
+            "id": str(uuid.uuid4())
         }
         resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
         if not resp.ok:
@@ -180,7 +174,9 @@ class MetagenomeSearchUtils:
                         },
                     }
                 }
-            }
+            },
+            "jsonrpc": "2.0",
+            "id": str(uuid.uuid4())
         }
         resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
         if not resp.ok:
@@ -293,14 +289,16 @@ class MetagenomeSearchUtils:
                 "from": start,
                 "size": limit,
                 "sort": [{s[0]: {"order": "asc" if s[1] else "desc"}} for s in sort_by]
-            }
+            },
+            "jsonrpc": "2.0",
+            "id": str(uuid.uuid4())
         }
         if aggs:
             query_data['params']['aggs'] = aggs
         if track_total_hits:
             query_data['params']['track_total_hits'] = True
         if self.debug:
-            print(f"querying {self.search_url}, with params: {json.dumps(params)}")
+            print(f"querying {self.search_url}, with params: {json.dumps(query_data)}")
         resp = requests.post(self.search_url, headers=headers, data=json.dumps(query_data))
         if not resp.ok:
             raise Exception(f"Not able to complete search request against {self.search_url} "
