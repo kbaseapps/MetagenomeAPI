@@ -39,21 +39,26 @@ def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching
         range_start = params['start']
         range_end = params['start'] + params['limit']
 
-        contigs = [
-            {
-                "contig_id": contig_ids[i],
-                "feature_count": feature_counts.get(
-                    contig_ids[i],
-                    msu.search_contig_feature_count(
-                        ctx["token"],
-                        params.get("ref"),
-                        contig_ids[i]
-                    )
-                ),
-                "length": contig_lengths[i]
-            }
-            for i in range(range_start, range_end)
-        ]
+        if range_end > len(contig_ids):
+            range_end = len(contig_ids)
+        if params['start'] > len(contig_ids):
+            contigs = []
+        else:
+            contigs = [
+                {
+                    "contig_id": contig_ids[i],
+                    "feature_count": feature_counts.get(
+                        contig_ids[i],
+                        msu.search_contig_feature_count(
+                            ctx["token"],
+                            params.get("ref"),
+                            contig_ids[i]
+                        )
+                    ),
+                    "length": contig_lengths[i]
+                }
+                for i in range(range_start, range_end)
+            ]
         result =  {
             "contigs": contigs,
             "num_found": len(data['contig_ids']),

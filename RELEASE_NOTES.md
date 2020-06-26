@@ -1,3 +1,6 @@
+# 2.3.2
+- fixing search_contigs out of bounds bug
+
 # 2.3.1
 - updating for new search_api compatability
 
