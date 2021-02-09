@@ -13,7 +13,9 @@ def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching
     """
     Function to get information about contigss
     """
-    ws = Workspace(config['workspace-url'], token=ctx['token'])
+    token = ctx.get('token', None)
+
+    ws = Workspace(config['workspace-url'], token=token)
     ama_utils = AMAUtils(ws)
     params['included_fields'] = ['contig_ids', 'contig_lengths']
     ama = ama_utils.get_annotated_metagenome_assembly(params)['genomes'][0]
@@ -24,7 +26,7 @@ def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching
     contig_ids = data['contig_ids']
     contig_lengths = data['contig_lengths']
     if msu.status_good:
-        feature_counts = msu.search_contig_feature_counts(ctx["token"],
+        feature_counts = msu.search_contig_feature_counts(token,
                                 params.get("ref"),
                                 min(8000, max(4000, params['start'] + params['limit'])))
                                 # len(contig_ids))
@@ -50,7 +52,7 @@ def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching
                     "feature_count": feature_counts.get(
                         contig_ids[i],
                         msu.search_contig_feature_count(
-                            ctx["token"],
+                            token,
                             params.get("ref"),
                             contig_ids[i]
                         )
@@ -64,8 +66,8 @@ def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching
             "num_found": len(data['contig_ids']),
             "start": params['start']
         }
-        # now cache answer for future.
-        caching.upload_to_cache(ctx['token'], cache_id, result)
+        # cache answer for future.
+        caching.upload_to_cache(token, cache_id, result)
     else:
         result = {
             "contigs": [],
@@ -108,7 +110,10 @@ class MetagenomeSearchUtils:
         # we use namespace 'WSVER' for versioned elasticsearch index.
         ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
 
-        headers = {"Authorization": token}
+        if token:
+            headers = {"Authorization": token}
+        else:
+            headers = {}
         params = {
             "method": "search_objects",
             "params": {
@@ -160,7 +165,10 @@ class MetagenomeSearchUtils:
         # we use namespace 'WSVER' for versioned elasticsearch index.
         ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
 
-        headers = {"Authorization": token}        
+        if token:
+            headers = {"Authorization": token}
+        else:
+            headers = {}
         params = {
             "method": "search_objects",
             "params": {
@@ -281,7 +289,10 @@ class MetagenomeSearchUtils:
         # we use namespace 'WSVER' for versioned elasticsearch index.
         ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
 
-        headers = {"Authorization": token}
+        if token:
+            headers = {"Authorization": token}
+        else:
+            headers = {}
         query_data = {
             "method": "search_objects",
             "params": {
