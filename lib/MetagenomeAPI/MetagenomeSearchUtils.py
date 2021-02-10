@@ -87,6 +87,17 @@ class MetagenomeSearchUtils:
         self.status_good = resp.ok
         self.debug = config.get("debug") == "1"
         self.max_sort_mem_size = 250000
+        # default fields to use for string searches.
+        self.text_fields = ['functions', 'functional_descriptions']
+        self.keyword_fields = ["id", "type"]
+        if config.get('text-fields'):
+            fields = config.get('text-fields').split(',')
+            # combine with default fields
+            self.text_fields = list(set(self.text_fields) + set(fields))
+        if config.get('keyword-fields')
+            fields = config.get('keyword_fields').split(',')
+            # combine with default fields
+            self.keyword_fields = list(set(self.keyword_fields) + set(fields))
 
     def search_feature_counts_by_type(self, token, ref):
         """
@@ -242,7 +253,7 @@ class MetagenomeSearchUtils:
         start   - elasticsearch page start delimiter
         limit   - elasticsearch page limit
         sort_by - list of tuples of (field to sort by, ascending bool) for elasticsearch
-        query   - text to prefix search on all fields.
+        query   - text to search on fields listed in 'text_fields' and 'keyword_fields' env vars.
         """
         if start is None:
             start = 0
@@ -253,12 +264,30 @@ class MetagenomeSearchUtils:
 
         extra_must = []
         if query:
-            fields = ["functions", "functional_descriptions", "id", "type"]
             shoulds = []
-            for field in fields:
+            for field in self.keyword_fields:
+                # for direct matches
+                shoulds.append({
+                    "match": {field: {"query": query}}
+                })
+                # for matching prefixes
                 shoulds.append({
                     "prefix": {field: {"value": query}}
                 })
+            # to improve the searchability, we tokenize the query on text fields
+            # to match elasticsearch behavior.
+            query_tokens = str(query).split()
+            for idx, query_token in enumerate(query_tokens):
+                for field in self.text_fields:
+                    # for direct matches
+                    shoulds.append({
+                        "match": {field: {"query": query_token}}
+                    })
+                    # for matching prefixes, only for last token
+                    if idx == len(query_tokens) - 1:
+                        shoulds.append({
+                            "prefix": {field: {"value": query_token}}
+                        })
             extra_must.append({'bool': {'should': shoulds}})
 
         t1 = time.time()
