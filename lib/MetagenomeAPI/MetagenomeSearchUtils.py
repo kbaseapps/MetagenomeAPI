@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
 import uuid
-import os
 import requests
 import time
 
@@ -91,11 +90,11 @@ class MetagenomeSearchUtils:
         self.text_fields = ['functions', 'functional_descriptions']
         self.keyword_fields = ["id", "type"]
         if config.get('text-fields'):
-            fields = config.get('text-fields').split(',')
+            fields = config['text-fields'].split(',')
             # combine with default fields
             self.text_fields = list(set(self.text_fields) + set(fields))
-        if config.get('keyword-fields')
-            fields = config.get('keyword_fields').split(',')
+        if config.get('keyword-fields'):
+            fields = config['keyword-fields'].split(',')
             # combine with default fields
             self.keyword_fields = list(set(self.keyword_fields) + set(fields))
 
