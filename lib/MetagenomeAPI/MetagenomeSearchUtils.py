@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
 import uuid
-import os
 import requests
 import time
 
@@ -30,6 +29,8 @@ def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching
                                 # len(contig_ids))
         if sort_by[0] == 'contig_id' and sort_by[1] == 0:
             contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
+        elif sort_by[0] == 'contig_id':
+            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=False)))
         elif sort_by[0] == 'length':
             contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
         elif sort_by[0] == 'feature_count':
@@ -87,6 +88,17 @@ class MetagenomeSearchUtils:
         self.status_good = resp.ok
         self.debug = config.get("debug") == "1"
         self.max_sort_mem_size = 250000
+        # default fields to use for string searches.
+        self.text_fields = ['functions', 'functional_descriptions']
+        self.keyword_fields = ["id", "type"]
+        if config.get('text-fields'):
+            fields = config['text-fields'].split(',')
+            # combine with default fields
+            self.text_fields = list(set(self.text_fields) + set(fields))
+        if config.get('keyword-fields'):
+            fields = config['keyword-fields'].split(',')
+            # combine with default fields
+            self.keyword_fields = list(set(self.keyword_fields) + set(fields))
 
     def search_feature_counts_by_type(self, token, ref):
         """
@@ -242,7 +254,7 @@ class MetagenomeSearchUtils:
         start   - elasticsearch page start delimiter
         limit   - elasticsearch page limit
         sort_by - list of tuples of (field to sort by, ascending bool) for elasticsearch
-        query   - text to prefix search on all fields.
+        query   - text to search on fields listed in 'text_fields' and 'keyword_fields' env vars.
         """
         if start is None:
             start = 0
@@ -253,12 +265,30 @@ class MetagenomeSearchUtils:
 
         extra_must = []
         if query:
-            fields = ["functions", "functional_descriptions", "id", "type"]
             shoulds = []
-            for field in fields:
+            for field in self.keyword_fields:
+                # for direct matches
+                shoulds.append({
+                    "match": {field: {"query": query}}
+                })
+                # for matching prefixes
                 shoulds.append({
                     "prefix": {field: {"value": query}}
                 })
+            # to improve the searchability, we tokenize the query on text fields
+            # to match elasticsearch behavior.
+            query_tokens = str(query).split()
+            for idx, query_token in enumerate(query_tokens):
+                for field in self.text_fields:
+                    # for direct matches
+                    shoulds.append({
+                        "match": {field: {"query": query_token}}
+                    })
+                    # for matching prefixes, only for last token
+                    if idx == len(query_tokens) - 1:
+                        shoulds.append({
+                            "prefix": {field: {"value": query_token}}
+                        })
             extra_must.append({'bool': {'should': shoulds}})
 
         t1 = time.time()

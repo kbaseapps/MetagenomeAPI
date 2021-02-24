@@ -1,3 +1,7 @@
+# 2.3.3
+- Changing test endpoint to appdev
+- Updating feature search query
+
 # 2.3.2
 - fixing search_contigs out of bounds bug
 
