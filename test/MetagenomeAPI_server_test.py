@@ -67,6 +67,10 @@ class MetagenomeAPITest(unittest.TestCase):
         # cls.binnedcontigs_ref_1 = '19621/2/1'
         # cls.assembly_ref_1 = '19621/1/1'
         # return
+        if 'ci' in cls.wsURL:
+            cls.ref = "43655/58/1"
+        if 'appdev' in cls.wsURL:
+            cls.ref = "30343/2/1"
 
         # create some test data
         cls.au = AssemblyUtil(cls.callback_url)
@@ -141,8 +145,10 @@ class MetagenomeAPITest(unittest.TestCase):
             data = json.load(f)
         if 'appdev' in self.wsURL:
             data['assembly_ref'] = "22385/57/1"
+            data['ontology_events'][0]['ontology_ref'] = "31857/8/1"
         if 'ci' in self.wsURL:
             data['assembly_ref'] = "43655/43/1"
+            data['ontology_events'][0]['ontology_ref'] = "43655/50/1"
         obj_info = self.dfu.save_objects({
             'id': self.getWsID(),
             "objects": [{
@@ -158,9 +164,9 @@ class MetagenomeAPITest(unittest.TestCase):
         """
         """
         self.maxDiff = None
-        ref = "43655/58/1"
+        # ref = "43655/58/1"
         params = {
-            "ref": ref
+            "ref": self.ref
         }
         ret = self.getImpl().get_feature_type_counts(self.getContext(), params)[0]
         check = {'feature_type_counts': {'CDS': 131854, 'gene': 131854, 'tRNA': 1024, 'repeat_region': 422, 'rRNA': 287}}
@@ -171,9 +177,9 @@ class MetagenomeAPITest(unittest.TestCase):
         """test the 'get_contig_info' function
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
-        ref = "43655/58/1"
+        # ref = "43655/58/1"
         params = {
-            "ref": ref,
+            "ref": self.ref,
             "contig_id": "Ga0065724_100164"
         }
         ret = self.getImpl().get_contig_info(self.getContext(), params)[0]
@@ -190,10 +196,9 @@ class MetagenomeAPITest(unittest.TestCase):
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         self.maxDiff=None
-        ref = "43655/58/1"
         # sort by 'length'
         params = {
-            "ref": ref,
+            "ref": self.ref,
             "start": 0,
             "limit": 10,
             "sort_by": ("length", 0)
@@ -210,7 +215,7 @@ class MetagenomeAPITest(unittest.TestCase):
                           sorted([c['length'] for c in ret['contigs']], reverse=True))
         # sort by 'contig_id'
         params = {
-            "ref": ref,
+            "ref": self.ref,
             "start": 0,
             "limit": 10,
             "sort_by": ("contig_id", 1)
@@ -227,7 +232,7 @@ class MetagenomeAPITest(unittest.TestCase):
                           sorted([c['contig_id'] for c in ret['contigs']]))
         # sort by 'feature_count'
         params = {
-            "ref": ref,
+            "ref": self.ref,
             "start": 0,
             "limit": 10,
             "sort_by": ("feature_count", 0)
@@ -249,9 +254,9 @@ class MetagenomeAPITest(unittest.TestCase):
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         # self.maxDiff=None
-        ref = "43655/58/1"
+        # ref = "43655/58/1"
         params = {
-            "ref": ref,
+            "ref": self.ref,
             "contig_id": "Ga0065724_100164",
             "region_start": 20000,
             "region_length": 20000,
@@ -277,9 +282,8 @@ class MetagenomeAPITest(unittest.TestCase):
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         self.maxDiff = None
-        ref = "43655/58/1"
         params = {
-            'ref': ref, #  reference to an AnnotatedMetagenomeAssembly object
+            'ref': self.ref, #  reference to an AnnotatedMetagenomeAssembly object
             'sort_by': [('id', 1)],
             'start': 0,
             'limit': 10,
@@ -295,9 +299,13 @@ class MetagenomeAPITest(unittest.TestCase):
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         # self.maxDiff=None
-        ref = "43655/58/1"
+        print('-'*80)
+        print('-'*80)
+        print('reference', self.ref)
+        print('-'*80)
+        print('-'*80)
         params = {
-            'ref': ref, #  reference to an AnnotatedMetagenomeAssembly object
+            'ref': self.ref, #  reference to an AnnotatedMetagenomeAssembly object
             'sort_by': [('id', 1)],
             'start': 0,
             'limit': 10

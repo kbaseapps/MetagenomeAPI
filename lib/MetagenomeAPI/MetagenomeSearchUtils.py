@@ -29,6 +29,8 @@ def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching
                                 # len(contig_ids))
         if sort_by[0] == 'contig_id' and sort_by[1] == 0:
             contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
+        elif sort_by[0] == 'contig_id':
+            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=False)))
         elif sort_by[0] == 'length':
             contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
         elif sort_by[0] == 'feature_count':
