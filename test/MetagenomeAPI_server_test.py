@@ -375,9 +375,7 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['start'], 0)
         self.assertEquals(len(ret['bins']), 2)
-        ret_bin_ids = [ret['bins'][0]['bin_id'], ret['bins'][1]['bin_id']]
-        truth = ['out_header.001.fasta', 'out_header.002.fasta']
-        self.assertEquals(tuple(sorted(ret_bin_ids)), tuple(sorted(truth)))
+        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.002.fasta')
 
         # with limit
         search_params = {'ref': self.binnedcontigs_ref_1, 'start': 2, 'limit': 2}
