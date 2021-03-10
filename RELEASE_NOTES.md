@@ -1,3 +1,6 @@
+# 2.3.4
+- Moved data objects to public workspace
+
 # 2.3.3
 - Changing test endpoint to appdev
 - Updating feature search query
