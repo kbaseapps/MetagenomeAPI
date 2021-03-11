@@ -43,7 +43,7 @@ jobs:
         sh $GITHUB_WORKSPACE/kb_sdk_actions/bin/make_testdir && echo "Created test_local"
         test -f "test_local/test.cfg" && echo "Confirmed config exists"
 
-    - name: Configure authentication
+    - name: Configure authentication for appdev
       if: "!contains(github.event.head_commit.message, 'skip ci')"
       shell: bash
       env:
@@ -60,3 +60,21 @@ jobs:
       run: |
         sh $GITHUB_WORKSPACE/kb_sdk_actions/bin/kb-sdk test
         bash <(curl -s https://codecov.io/bash)
+
+      - name: Configure authentication for the KBase ci environment
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
+        shell: bash
+        env:
+          KBASE_TEST_TOKEN: ${{ secrets.KBASE_CI_TOKEN }}
+        run: |
+          # Add token to config
+          sed -ie "s/^test_token=.*$/&$KBASE_CI_TOKEN/g" ./test_local/test.cfg
+
+      - name: Run tests for the KBase ci environment
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
+        shell: bash
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          sh $GITHUB_WORKSPACE/kb_sdk_actions/bin/kb-sdk test
+          bash <(curl -s https://codecov.io/bash)
