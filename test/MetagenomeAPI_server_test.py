@@ -67,12 +67,13 @@ class MetagenomeAPITest(unittest.TestCase):
         # cls.binnedcontigs_ref_1 = '19621/2/1'
         # cls.assembly_ref_1 = '19621/1/1'
         # return
-
+        cls.name_ref = "KBaseTestData/metagenome_badabing.assembly.fa_metagenome/1"
         # create some test data
         cls.au = AssemblyUtil(cls.callback_url)
         cls.mu = MetagenomeUtils(cls.callback_url)
         cls.dfu = DataFileUtil(cls.callback_url)
-
+        # name needs to be converted to id, or will fail tests
+        cls.ref = cls.wsClient.get_objects2({'objects': [{'ref': cls.name_ref}]})['data'][0]['path'][0]
         # building Assembly
         assembly_filename = 'small_bin_contig_file.fasta'
         cls.assembly_fasta_file_path = os.path.join(cls.scratch, assembly_filename)
@@ -139,10 +140,20 @@ class MetagenomeAPITest(unittest.TestCase):
         json_file = "data/test_metagenome_object.json"
         with open(json_file) as f:
             data = json.load(f)
-        if 'appdev' in self.wsURL:
-            data['assembly_ref'] = "22385/57/1"
-        if 'ci' in self.wsURL:
-            data['assembly_ref'] = "43655/43/1"
+
+        data['assembly_ref'] = "KBaseTestData/metagenome_test_annotated.assembly.fa_assembly/1"
+        data['ontology_events'][0]['ontology_ref'] = "KBaseOntology/gene_ontology/1"
+        # create a new fake handle to solve the handle permission issue in original json data file
+        # these handles are not used in tests
+        shutil.copy("data/features_handle_ref", os.path.join(self.scratch, 'features_handle_ref'))
+        uploaded = self.dfu.file_to_shock(
+            {'file_path': os.path.join(self.scratch, 'features_handle_ref'),
+             'make_handle': 1})
+        fhandle = uploaded['handle']['hid']
+        data["features_handle_ref"] = fhandle
+        data["gff_handle_ref"] = fhandle
+        data["protein_handle_ref"] = fhandle
+
         obj_info = self.dfu.save_objects({
             'id': self.getWsID(),
             "objects": [{
@@ -158,9 +169,8 @@ class MetagenomeAPITest(unittest.TestCase):
         """
         """
         self.maxDiff = None
-        ref = "43655/58/1"
         params = {
-            "ref": ref
+            "ref": self.ref
         }
         ret = self.getImpl().get_feature_type_counts(self.getContext(), params)[0]
         check = {'feature_type_counts': {'CDS': 131854, 'gene': 131854, 'tRNA': 1024, 'repeat_region': 422, 'rRNA': 287}}
@@ -171,9 +181,8 @@ class MetagenomeAPITest(unittest.TestCase):
         """test the 'get_contig_info' function
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
-        ref = "43655/58/1"
         params = {
-            "ref": ref,
+            "ref": self.ref,
             "contig_id": "Ga0065724_100164"
         }
         ret = self.getImpl().get_contig_info(self.getContext(), params)[0]
@@ -190,10 +199,9 @@ class MetagenomeAPITest(unittest.TestCase):
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         self.maxDiff=None
-        ref = "43655/58/1"
         # sort by 'length'
         params = {
-            "ref": ref,
+            "ref": self.ref,
             "start": 0,
             "limit": 10,
             "sort_by": ("length", 0)
@@ -210,7 +218,7 @@ class MetagenomeAPITest(unittest.TestCase):
                           sorted([c['length'] for c in ret['contigs']], reverse=True))
         # sort by 'contig_id'
         params = {
-            "ref": ref,
+            "ref": self.ref,
             "start": 0,
             "limit": 10,
             "sort_by": ("contig_id", 1)
@@ -227,7 +235,7 @@ class MetagenomeAPITest(unittest.TestCase):
                           sorted([c['contig_id'] for c in ret['contigs']]))
         # sort by 'feature_count'
         params = {
-            "ref": ref,
+            "ref": self.ref,
             "start": 0,
             "limit": 10,
             "sort_by": ("feature_count", 0)
@@ -249,9 +257,8 @@ class MetagenomeAPITest(unittest.TestCase):
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         # self.maxDiff=None
-        ref = "43655/58/1"
         params = {
-            "ref": ref,
+            "ref": self.ref,
             "contig_id": "Ga0065724_100164",
             "region_start": 20000,
             "region_length": 20000,
@@ -277,9 +284,8 @@ class MetagenomeAPITest(unittest.TestCase):
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         self.maxDiff = None
-        ref = "43655/58/1"
         params = {
-            'ref': ref, #  reference to an AnnotatedMetagenomeAssembly object
+            'ref': self.ref, #  reference to an AnnotatedMetagenomeAssembly object
             'sort_by': [('id', 1)],
             'start': 0,
             'limit': 10,
@@ -295,9 +301,13 @@ class MetagenomeAPITest(unittest.TestCase):
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
         # self.maxDiff=None
-        ref = "43655/58/1"
+        print('-'*80)
+        print('-'*80)
+        print('reference', self.ref)
+        print('-'*80)
+        print('-'*80)
         params = {
-            'ref': ref, #  reference to an AnnotatedMetagenomeAssembly object
+            'ref': self.ref, #  reference to an AnnotatedMetagenomeAssembly object
             'sort_by': [('id', 1)],
             'start': 0,
             'limit': 10
@@ -345,9 +355,9 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['start'], 0)
         self.assertEquals(len(ret['bins']), 3)
-        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.002.fasta')
-        self.assertEquals(ret['bins'][1]['bin_id'], 'out_header.001.fasta')
-        self.assertEquals(ret['bins'][2]['bin_id'], 'out_header.003.fasta')
+        ret_bin_ids = [ret['bins'][0]['bin_id'], ret['bins'][1]['bin_id'], ret['bins'][2]['bin_id']]
+        truth = ['out_header.001.fasta', 'out_header.002.fasta', 'out_header.003.fasta']
+        self.assertEquals(tuple(sorted(ret_bin_ids)), tuple(sorted(truth)))
 
         # with query
         search_params = {'ref': self.binnedcontigs_ref_1, 'query': '7049'}
@@ -365,7 +375,6 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['start'], 0)
         self.assertEquals(len(ret['bins']), 2)
-        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.002.fasta')
 
         # with limit
         search_params = {'ref': self.binnedcontigs_ref_1, 'start': 2, 'limit': 2}
@@ -374,7 +383,6 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['start'], 2)
         self.assertEquals(len(ret['bins']), 1)
-        self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.003.fasta')
 
         # sort by gc
         search_params = {'ref': self.binnedcontigs_ref_1, 'limit': 2, 'sort_by': [['gc', 0]]}
@@ -394,7 +402,6 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['bins'][0]['bin_id'], 'out_header.002.fasta')
         self.assertEquals(ret['bins'][1]['bin_id'], 'out_header.001.fasta')
         self.assertEquals(ret['bins'][2]['bin_id'], 'out_header.003.fasta')
-
         # todo: sort by other stuff
 
     # @unittest.skip('x')
