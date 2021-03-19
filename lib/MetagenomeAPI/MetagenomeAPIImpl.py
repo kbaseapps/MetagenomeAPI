@@ -210,7 +210,7 @@ class MetagenomeAPI:
         # return variables are: result
         #BEGIN search
         if self.msu.status_good:
-          result = self.msu.search(ctx['token'], params.get('ref'), params.get('start'),
+          result = self.msu.search(ctx.get('token'), params.get('ref'), params.get('start'),
                                    params.get('limit'), params.get('sort_by'), params.get('query'))
         else:
           result = {"features": []}
@@ -275,7 +275,7 @@ class MetagenomeAPI:
         # return variables are: result
         #BEGIN search_region
         if self.msu.status_good:
-          result = self.msu.search_region(ctx["token"],
+          result = self.msu.search_region(ctx.get("token"),
                                           params.get("ref", None),
                                           params.get("contig_id", None),
                                           params.get("region_start", None),
@@ -341,8 +341,9 @@ class MetagenomeAPI:
           "limit": params['limit'],
           "sort_by": sort_by
         }
-        cache_id = caching.get_cache_id(ctx['token'], cache_data)
-        result = caching.download_cache_string(ctx['token'], cache_id)
+        token = ctx.get('token')
+        cache_id = caching.get_cache_id(token, cache_data)
+        result = caching.download_cache_string(token, cache_id)
         if not result or not result.strip():
           result = get_contig_feature_info(ctx, self.config, params, sort_by, cache_id, self.msu, caching)
         else:

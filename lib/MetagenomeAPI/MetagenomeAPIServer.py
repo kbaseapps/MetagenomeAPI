@@ -349,7 +349,7 @@ class Application(object):
         self.rpc_service.add(impl_MetagenomeAPI.get_annotated_metagenome_assembly,
                              name='MetagenomeAPI.get_annotated_metagenome_assembly',
                              types=[dict])
-        self.method_authentication['MetagenomeAPI.get_annotated_metagenome_assembly'] = 'required'  # noqa
+        self.method_authentication['MetagenomeAPI.get_annotated_metagenome_assembly'] = 'optional'  # noqa
         self.rpc_service.add(impl_MetagenomeAPI.search,
                              name='MetagenomeAPI.search',
                              types=[dict])
@@ -357,19 +357,19 @@ class Application(object):
         self.rpc_service.add(impl_MetagenomeAPI.search_region,
                              name='MetagenomeAPI.search_region',
                              types=[dict])
-        self.method_authentication['MetagenomeAPI.search_region'] = 'required'  # noqa
+        self.method_authentication['MetagenomeAPI.search_region'] = 'optional'  # noqa
         self.rpc_service.add(impl_MetagenomeAPI.search_contigs,
                              name='MetagenomeAPI.search_contigs',
                              types=[dict])
-        self.method_authentication['MetagenomeAPI.search_contigs'] = 'required'  # noqa
+        self.method_authentication['MetagenomeAPI.search_contigs'] = 'optional'  # noqa
         self.rpc_service.add(impl_MetagenomeAPI.get_contig_info,
                              name='MetagenomeAPI.get_contig_info',
                              types=[dict])
-        self.method_authentication['MetagenomeAPI.get_contig_info'] = 'required'  # noqa
+        self.method_authentication['MetagenomeAPI.get_contig_info'] = 'optional'  # noqa
         self.rpc_service.add(impl_MetagenomeAPI.get_feature_type_counts,
                              name='MetagenomeAPI.get_feature_type_counts',
                              types=[dict])
-        self.method_authentication['MetagenomeAPI.get_feature_type_counts'] = 'required'  # noqa
+        self.method_authentication['MetagenomeAPI.get_feature_type_counts'] = 'optional'  # noqa
         self.rpc_service.add(impl_MetagenomeAPI.status,
                              name='MetagenomeAPI.status',
                              types=[dict])

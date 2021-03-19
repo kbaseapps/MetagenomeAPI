@@ -117,7 +117,7 @@ module MetagenomeAPI {
     } getAnnotatedMetagenomeAssemblyOutput;
 
     funcdef get_annotated_metagenome_assembly(getAnnotatedMetagenomeAssemblyParams params)
-        returns (getAnnotatedMetagenomeAssemblyOutput output) authentication required;
+        returns (getAnnotatedMetagenomeAssemblyOutput output) authentication optional;
 
     /*
         query: user provided input string to prefix search against 'functions', 'functional_descriptions', 'id', and 'type' fields of the metagenome features.
@@ -224,7 +224,7 @@ module MetagenomeAPI {
         int num_found;
     } SearchRegionResult;
 
-    funcdef search_region(SearchRegionOptions params) returns (SearchRegionResult result) authentication required;
+    funcdef search_region(SearchRegionOptions params) returns (SearchRegionResult result) authentication optional;
 
     /*
         ref - `KBaseMetagenomes.AnnotatedMetagenomeAssembly` workspace object reference
@@ -264,7 +264,7 @@ module MetagenomeAPI {
         list<contig> contigs;
     } SearchContigsResult;
 
-    funcdef search_contigs(SearchContigsOptions params) returns (SearchContigsResult result) authentication required;
+    funcdef search_contigs(SearchContigsOptions params) returns (SearchContigsResult result) authentication optional;
 
     typedef structure {
         string ref;
@@ -275,7 +275,7 @@ module MetagenomeAPI {
         contig contig;
     } GetContigInfoResult;
 
-    funcdef get_contig_info(GetContigInfoParams params) returns (GetContigInfoResult result) authentication required;
+    funcdef get_contig_info(GetContigInfoParams params) returns (GetContigInfoResult result) authentication optional;
 
     typedef structure {
         string ref;
@@ -285,6 +285,6 @@ module MetagenomeAPI {
         mapping<string, int> feature_type_counts;
     } GetFeatureTypeCountsResult;
 
-    funcdef get_feature_type_counts(GetFeatureTypeCountsParams params) returns (GetFeatureTypeCountsResult result) authentication required;
+    funcdef get_feature_type_counts(GetFeatureTypeCountsParams params) returns (GetFeatureTypeCountsResult result) authentication optional;
 
 };
