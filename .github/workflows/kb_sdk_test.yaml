@@ -2,9 +2,13 @@ name: KBase SDK Tests
 
 on:
   push:
-    branches: [ master ]
+    branches:
+    - master
+
   pull_request:
-    branches: [ master ]
+    branches:
+    - master
+    - develop
 
 jobs:
 
@@ -34,7 +38,7 @@ jobs:
         test -f "$HOME/kb_sdk_actions/bin/kb-sdk" && echo "CI files cloned"
         # Pull kb-sdk & create startup script
         docker pull kbase/kb-sdk
-
+       
         sh $GITHUB_WORKSPACE/kb_sdk_actions/bin/make_testdir && echo "Created test_local"
         test -f "test_local/test.cfg" && echo "Confirmed config exists"
 

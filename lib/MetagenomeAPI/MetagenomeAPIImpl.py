@@ -26,9 +26,9 @@ class MetagenomeAPI:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "2.3.3"
+    VERSION = "2.3.4"
     GIT_URL = "https://github.com/kbaseapps/MetagenomeAPI.git"
-    GIT_COMMIT_HASH = "c47aa5bb645dc22931ac12491e299fa453ccc45f"
+    GIT_COMMIT_HASH = "b9466e5d6363e9c6258b505fd2ba7a86f94958c4"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER

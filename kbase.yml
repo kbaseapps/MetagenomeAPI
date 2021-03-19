@@ -8,10 +8,10 @@ service-language:
     python
 
 module-version:
-    2.3.3
+    2.3.4
 
 owners:
-    [slebras]
+    [slebras,zimingy]
 
 service-config:
     dynamic-service: true
