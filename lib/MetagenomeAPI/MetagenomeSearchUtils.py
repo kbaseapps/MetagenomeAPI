@@ -94,6 +94,7 @@ class MetagenomeSearchUtils:
         self.workspace_url = config.get('workspace-url')
         self.handle_service_url = config.get('handle-service-url')
         self.scratch = config.get("scratch", "/tmp")
+        self.status_good = True
         self.debug = config.get("debug") == "1"
         if self.debug:
             logger = logging.getLogger()
@@ -137,6 +138,9 @@ class MetagenomeSearchUtils:
         num_results   - number of results to return.
         """
         conn = self._get_sql_conn(ref, token)
+        # If conn is none then it isn't ready yet and return None
+        if not conn:
+            return {}
         q = "SELECT contig_id, count(*) from features"
         q += " GROUP BY contig_id LIMIT %d" % (num_results)
         resp = {}
@@ -150,7 +154,7 @@ class MetagenomeSearchUtils:
         conn = self._get_sql_conn(ref, token)
         # If conn is none then it isn't ready yet and return None
         if not conn:
-            return None
+            return {}
         q = "SELECT type, count(*) from features GROUP BY type"
         resp = {}
         cursor = conn.execute(q)
@@ -264,7 +268,8 @@ class MetagenomeSearchUtils:
         features = []
         for row in cursor:
             if ct >= start and rct < limit:
-                features.append(json.loads(row[0]))
+                f = self._process_features(json.loads(row[0]))
+                features.append(f)
                 rct += 1
             ct += 1
         resp = {
@@ -274,6 +279,22 @@ class MetagenomeSearchUtils:
             "features": features
         }
         return resp
+
+    def _process_features(self, feature):
+        return {
+            "aliases": feature.get("aliases"),
+            "feature_id": feature["id"],
+            "feature_type": feature["type"],
+            "location": feature["location"],
+            "global_location": feature["location"],
+            "dna_sequence": feature["dna_sequence"],
+            "parent_gene": feature.get("parent_gene"),
+            "size": feature["dna_sequence_length"],
+            "function": feature.get("functions", [""])[0],
+            "functional_descriptions": None,
+            "ontology_terms": {},
+            "warnings": feature.get("warnings")
+        }
 
     def get_rec(self, conn, id):
         cursor = conn.execute("SELECT json from features WHERE id='%s'" % (id))
