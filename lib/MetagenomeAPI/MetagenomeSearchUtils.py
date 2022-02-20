@@ -196,7 +196,8 @@ class MetagenomeSearchUtils:
         features = []
         for row in cursor:
             if ct >= start and rct < limit:
-                features.append(json.loads(row[0]))
+                f = self._process_features(json.loads(row[0]))
+                features.append(f)
                 rct += 1
             ct += 1
         resp = {
