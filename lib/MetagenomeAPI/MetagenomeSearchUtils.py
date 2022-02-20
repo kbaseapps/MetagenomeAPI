@@ -281,12 +281,20 @@ class MetagenomeSearchUtils:
         return resp
 
     def _process_features(self, feature):
+        locs = []
+        for loc in feature["location"]:
+            locs.append({
+                "contig_id": loc[0],
+                "start": loc[1],
+                "stop": loc[3],
+                "strand": loc[2]
+            })
         return {
             "aliases": feature.get("aliases"),
             "feature_id": feature["id"],
             "feature_type": feature["type"],
-            "location": feature["location"],
-            "global_location": feature["location"],
+            "location": locs,
+            "global_location": locs[0],
             "dna_sequence": feature["dna_sequence"],
             "parent_gene": feature.get("parent_gene"),
             "size": feature["dna_sequence_length"],
