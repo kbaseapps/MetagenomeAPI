@@ -187,17 +187,8 @@ class MetagenomeSearchUtils:
         q += "OR (stops BETWEEN %d AND %d) " % (region_start, stop)
         q += "OR (starts<=%d AND stops>=%d)) " % (region_start, stop)
         q += " AND contig_id='%s'" % (contig_id)
+        q += self._order_by(sort_by)
 
-        # handle sort_by
-        if sort_by:
-            ele = []
-            for sb in sort_by:
-                if sb[1] > 0:
-                    ele.append("%s ASC" % (sb[0]))
-                else:
-                    ele.append("%s DESC" % (sb[0]))
-            if len(ele) > 0:
-                q += " ORDER BY %s" % (','.join(ele))
         query = q
         cursor = conn.execute(query)
         ct = 0
@@ -251,16 +242,8 @@ class MetagenomeSearchUtils:
         if len(ele) > 0:
             q += "WHERE (%s) " % (" OR ".join(ele))
 
-        # handle sort_by
-        if sort_by:
-            ele = []
-            for sb in sort_by:
-                if sb[1] > 0:
-                    ele.append("%s ASC" % (sb[0]))
-                else:
-                    ele.append("%s DESC" % (sb[0]))
-            if len(ele) > 0:
-                q += " ORDER BY %s" % (','.join(ele))
+        q += self._order_by(sort_by)
+
         query = q
         cursor = conn.execute(query)
         ct = 0
@@ -279,6 +262,22 @@ class MetagenomeSearchUtils:
             "features": features
         }
         return resp
+
+    def _order_by(self, sort_by):
+        # handle sort_by
+        if sort_by:
+            ele = []
+            for sb in sort_by:
+                key = sb[0]
+                if key == "contig_ids":
+                    key = "contig_id"
+                if sb[1] > 0:
+                    ele.append("%s ASC" % (key))
+                else:
+                    ele.append("%s DESC" % (key))
+            if len(ele) > 0:
+                return " ORDER BY %s" % (','.join(ele))
+        return ""''""
 
     def _process_features(self, feature):
         locs = []
@@ -305,6 +304,9 @@ class MetagenomeSearchUtils:
         }
 
     def get_rec(self, conn, id):
+        """
+        Currently unused
+        """
         cursor = conn.execute("SELECT json from features WHERE id='%s'" % (id))
         for row in cursor:
             return json.loads(row[0])
