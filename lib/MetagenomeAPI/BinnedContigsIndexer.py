@@ -33,7 +33,7 @@ class BinnedContigsIndexer:
         self.ws_url = config["workspace-url"]
         self.metagenome_index_dir = config["metagenome-index-dir"]
         if not os.path.isdir(self.metagenome_index_dir):
-            os.makedirs(self.metagenome_index_dir)
+            os.makedirs(self.metagenome_index_dir, exist_ok=True)
         self.debug = "debug" in config and config["debug"] == "1"
         self.max_sort_mem_size = 250000
         self.unicode_comma = u"\uFF0C"

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
+from xmlrpc.client import Server
+from nose.plugins.attrib import attr
 import os
 import json  # noqa: F401
 import time
@@ -25,6 +27,8 @@ from MetagenomeAPI.MetagenomeAPIImpl import MetagenomeAPI
 from MetagenomeAPI.MetagenomeAPIServer import MethodContext
 from MetagenomeAPI.authclient import KBaseAuth as _KBaseAuth
 from installed_clients.DataFileUtilClient import DataFileUtil
+import MetagenomeAPI.MetagenomeSearchUtils as MSU
+from Workspace.baseclient import ServerError
 
 
 class MetagenomeAPITest(unittest.TestCase):
@@ -32,6 +36,7 @@ class MetagenomeAPITest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         token = environ.get('KB_AUTH_TOKEN', None)
+        cls.token = token
         config_file = environ.get('KB_DEPLOYMENT_CONFIG', None)
         cls.cfg = {}
         config = ConfigParser()
@@ -78,13 +83,19 @@ class MetagenomeAPITest(unittest.TestCase):
         assembly_filename = 'small_bin_contig_file.fasta'
         cls.assembly_fasta_file_path = os.path.join(cls.scratch, assembly_filename)
         shutil.copy(os.path.join("data", assembly_filename), cls.assembly_fasta_file_path)
+        sqlf = "%s.sql" % (cls.ref.replace("/", ":"))
+        cls.sql = os.path.join(cls.scratch, sqlf)
+        shutil.copy(os.path.join("data", "preindexed.sql"), cls.sql)
+        cls.uploadBins()
 
+
+    @classmethod
+    def uploadBins(cls):
         assembly_params = {
             'file': {'path': cls.assembly_fasta_file_path},
             'workspace_name': cls.wsName,
             'assembly_name': 'MyAssembly'
         }
-        print(os.path.isfile(cls.assembly_fasta_file_path))
 
         cls.assembly_ref_1 = cls.au.save_assembly_from_fasta(assembly_params)
         print('Assembly1:' + cls.assembly_ref_1)
@@ -93,7 +104,6 @@ class MetagenomeAPITest(unittest.TestCase):
         test_directory_name = 'test_maxbindata'
         cls.test_directory_path = os.path.join(cls.scratch, test_directory_name)
         os.makedirs(cls.test_directory_path)
-        print(os.listdir(cls.test_directory_path))
         for item in os.listdir(os.path.join("data", "MaxBin_Result_Sample")):
             shutil.copy(os.path.join("data", "MaxBin_Result_Sample", item),
                         os.path.join(cls.test_directory_path, item))
@@ -468,3 +478,44 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['start'], 0)
         self.assertEquals(len(ret['contigs']), 5)
         self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_2492_length_1446_cov_9.165283')
+
+    @attr("indexing")
+    def test_indexing(self):
+        # Test a copy
+        objname = "a_metagenome"
+        src_ws = "KBaseTestData"
+        src_obj = "metagenome_badabing.assembly.fa_metagenome"
+
+        ret = self.wsClient.copy_object({'from': {'workspace': src_ws, 'name': src_obj, 'ver': 1},
+                        'to': {'wsid': self.ws_info[0], 'name': objname}})
+        ref = '%d/%d/%d' % (ret[6], ret[0], ret[4])
+        msu = MSU.MetagenomeSearchUtils(self.cfg)
+        resp = msu.search(self.token, ref, 0, 10, None, None)
+        if resp is None or "indexing" in resp:
+            time.sleep(0.2)
+            resp = msu.search(self.token, ref, 0, 10, None, None)
+        self.assertEquals(len(resp["features"]), 10)
+
+        sqlf = os.path.join(self.scratch, '%s.sql' % (ref.replace("/", ":")))
+        self.assertGreater(os.stat(sqlf).st_nlink, 1)
+        # Test an unindexed object
+        src_ws = "KBaseTestData"
+        src_obj = "metagenome_small"
+
+        ret = self.wsClient.copy_object({'from': {'workspace': src_ws, 'name': src_obj, 'ver': 1},
+                        'to': {'wsid': self.ws_info[0], 'name': src_obj}})
+        ref = '%d/%d/%d' % (ret[6], ret[0], ret[4])
+        msu = MSU.MetagenomeSearchUtils(self.cfg)
+        resp = msu.search(self.token, ref, 0, 10, None, None)
+        ct = 0
+        while (resp is None or "indexing" in resp) and ct < 60:
+            time.sleep(0.5)
+            resp = msu.search(self.token, ref, 0, 10, None, None)
+            ct += 1
+        self.assertEquals(len(resp["features"]), 10)
+
+        sqlf = os.path.join(self.scratch, '%s.sql' % (ref.replace("/", ":")))
+        self.assertGreater(os.stat(sqlf).st_nlink, 1)
+        # Test permission or WS error
+        with self.assertRaises(ServerError):
+            resp = msu.search(self.token, "1000000/1/1", 0, 10, None, None)

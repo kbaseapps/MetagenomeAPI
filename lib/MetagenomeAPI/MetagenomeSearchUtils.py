@@ -125,9 +125,9 @@ class MetagenomeSearchUtils:
             obj = ws.get_objects2({'objects': [{'ref': ref, 'included': incl}]})
             objdata = obj["data"][0]
         except Exception as ex:
-            logging.error(ex.__class__)
+            logging.error(str(ex)[0:500])
             # Maybe just raise the error
-            return None
+            raise ex
         return objdata
 
     def search_contig_feature_counts(self, token, ref, num_results):
@@ -178,7 +178,17 @@ class MetagenomeSearchUtils:
         conn = self._get_sql_conn(ref, token)
         # If conn is none then it isn't ready yet and return None
         if not conn:
-            return None
+            resp = {
+                "num_found": 0,
+                "start": start,
+                "query": query,
+                "region_start": region_start,
+                "region_length": region_length,
+                "contig_id": contig_id,
+                "features": [],
+                "indexing": True
+            }
+            return resp
         stop = region_start + region_length
         q = "SELECT json from features "
         # TODO: Handle direction
@@ -203,7 +213,7 @@ class MetagenomeSearchUtils:
         resp = {
             "num_found": ct,
             "start": start,
-            "query": query,
+            "query": "",
             "region_start": region_start,
             "region_length": region_length,
             "contig_id": contig_id,
@@ -230,18 +240,26 @@ class MetagenomeSearchUtils:
         conn = self._get_sql_conn(ref, token)
         # If conn is none then it isn't ready yet and return None
         if not conn:
-            return None
+            resp = {
+                "num_found": 0,
+                "start": start,
+                "query": "",
+                "features": [],
+                "indexing": True
+            }
+            return resp
         q = "SELECT json from features "
 
         # Handle query
-        ele = []
-        for tok in str(query).split():
-            for k in self.keyword_fields:
-                ele.append("(%s='%s')" % (k, tok))
-            for k in self.text_fields:
-                ele.append("(%s like '%%%s%%')" % (k, tok))
-        if len(ele) > 0:
-            q += "WHERE (%s) " % (" OR ".join(ele))
+        if query is not None and query != "":
+            ele = []
+            for tok in str(query).split():
+                for k in self.keyword_fields:
+                    ele.append("(%s='%s')" % (k, tok))
+                for k in self.text_fields:
+                    ele.append("(%s like '%%%s%%')" % (k, tok))
+            if len(ele) > 0:
+                q += "WHERE (%s) " % (" OR ".join(ele))
 
         q += self._order_by(sort_by)
 
