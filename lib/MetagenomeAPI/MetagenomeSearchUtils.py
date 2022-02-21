@@ -35,57 +35,45 @@ def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching
                            f"lengths (size: {len(data['contig_lengths'])}) sizes do not match.")
     contig_ids = data['contig_ids']
     contig_lengths = data['contig_lengths']
-    if True:
-        feature_counts = msu.search_contig_feature_counts(ctx["token"],
-                                params.get("ref"),
-                                min(8000, max(4000, params['start'] + params['limit'])))
-                                # len(contig_ids))
-        if sort_by[0] == 'contig_id' and sort_by[1] == 0:
-            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
-        elif sort_by[0] == 'contig_id':
-            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=False)))
-        elif sort_by[0] == 'length':
-            contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
-        elif sort_by[0] == 'feature_count':
-            # sort the contig_ids  and contig_lengths by feature_counts
-            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=sort_by[1] == 0, key=lambda x: feature_counts.get(x[0], 0))))
-        # get feature_counts
-        range_start = params['start']
-        range_end = params['start'] + params['limit']
+    feature_counts = msu.search_contig_feature_counts(ctx["token"],
+                            params.get("ref"),
+                            min(8000, max(4000, params['start'] + params['limit'])))
+                            # len(contig_ids))
+    if sort_by[0] == 'contig_id' and sort_by[1] == 0:
+        contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
+    elif sort_by[0] == 'contig_id':
+        contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=False)))
+    elif sort_by[0] == 'length':
+        contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
+    elif sort_by[0] == 'feature_count':
+        # sort the contig_ids  and contig_lengths by feature_counts
+        contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=sort_by[1] == 0, key=lambda x: feature_counts.get(x[0], 0))))
+    # get feature_counts
+    range_start = params['start']
+    range_end = params['start'] + params['limit']
 
-        if range_end > len(contig_ids):
-            range_end = len(contig_ids)
-        if params['start'] > len(contig_ids):
-            contigs = []
-        else:
-            contigs = [
-                {
-                    "contig_id": contig_ids[i],
-                    "feature_count": feature_counts.get(contig_ids[i], 0),
-                    "length": contig_lengths[i]
-                }
-                for i in range(range_start, range_end)
-            ]
-        result =  {
-            "contigs": contigs,
-            "num_found": len(data['contig_ids']),
-            "start": params['start']
-        }
-        # now cache answer for future.
-        caching.upload_to_cache(ctx['token'], cache_id, result)
+    if range_end > len(contig_ids):
+        range_end = len(contig_ids)
+    if params['start'] > len(contig_ids):
+        contigs = []
     else:
-        result = {
-            "contigs": [],
-            "num_found": 0,
-            "start": params['start']
-        }
+        contigs = [
+            {
+                "contig_id": contig_ids[i],
+                "feature_count": feature_counts.get(contig_ids[i], 0),
+                "length": contig_lengths[i]
+            }
+            for i in range(range_start, range_end)
+        ]
+    result =  {
+        "contigs": contigs,
+        "num_found": len(data['contig_ids']),
+        "start": params['start']
+    }
+    # now cache answer for future.
+    caching.upload_to_cache(ctx['token'], cache_id, result)
     return result
 
-class context():
-    def __init__(self, objdata, sqlf, token):
-        self.objata = objdata
-        self.sqlf = sqlf
-        self.token = token
 
 class MetagenomeSearchUtils:
     """Utilities for Searching Annotated Metagenome Assemblies in the KBase Search API"""
@@ -181,7 +169,7 @@ class MetagenomeSearchUtils:
             resp = {
                 "num_found": 0,
                 "start": start,
-                "query": query,
+                "query": "",
                 "region_start": region_start,
                 "region_length": region_length,
                 "contig_id": contig_id,
@@ -213,7 +201,7 @@ class MetagenomeSearchUtils:
         resp = {
             "num_found": ct,
             "start": start,
-            "query": "",
+            "query": query,
             "region_start": region_start,
             "region_length": region_length,
             "contig_id": contig_id,
@@ -296,7 +284,7 @@ class MetagenomeSearchUtils:
                     ele.append("%s DESC" % (key))
             if len(ele) > 0:
                 return " ORDER BY %s" % (','.join(ele))
-        return ""''""
+        return ""
 
     def _process_features(self, feature):
         locs = []
@@ -321,14 +309,6 @@ class MetagenomeSearchUtils:
             "ontology_terms": {},
             "warnings": feature.get("warnings")
         }
-
-    def get_rec(self, conn, id):
-        """
-        Currently unused
-        """
-        cursor = conn.execute("SELECT json from features WHERE id='%s'" % (id))
-        for row in cursor:
-            return json.loads(row[0])
 
     def _get_sql_conn(self, ref, token):
         """
@@ -378,6 +358,9 @@ class Indexer():
         sqlf: name of the sqlite file to generate
         token: token associated with the request
         """
+        if os.path.exists(sqlf):
+            logging.info("Index already generated")
+            return
         copied = objdata.get("copied")
 
         # If this is a copy, let's try to reuse the
