@@ -181,23 +181,24 @@ class MetagenomeSearchUtils:
         q = "SELECT json from features "
         # TODO: Handle direction
         # q += "WHERE ((starts>=%d AND starts<=%d) " % (region_start, stop)
-        q += "WHERE ((starts BETWEEN %d AND %d) " % (region_start, stop)
-        q += "OR (stops BETWEEN %d AND %d) " % (region_start, stop)
-        q += "OR (starts<=%d AND stops>=%d)) " % (region_start, stop)
-        q += " AND contig_id='%s'" % (contig_id)
-        q += self._order_by(sort_by)
+        where_clause = "WHERE ((starts BETWEEN %d AND %d) " % (region_start, stop)
+        where_clause += "OR (stops BETWEEN %d AND %d) " % (region_start, stop)
+        where_clause += "OR (starts<=%d AND stops>=%d)) " % (region_start, stop)
+        where_clause += " AND contig_id='%s'" % (contig_id)
 
+        cursor = conn.execute("SELECT count(*) from features " + where_clause)
+        ct = cursor.fetchone()[0]
+
+        q += where_clause
+        q += self._order_by(sort_by)
+        q += " LIMIT %d OFFSET %d" % (limit, start)
         query = q
         cursor = conn.execute(query)
-        ct = 0
-        rct = 0
         features = []
         for row in cursor:
-            if ct >= start and rct < limit:
-                f = self._process_features(json.loads(row[0]))
-                features.append(f)
-                rct += 1
-            ct += 1
+            f = self._process_features(json.loads(row[0]))
+            features.append(f)
+
         resp = {
             "num_found": ct,
             "start": start,
@@ -239,6 +240,7 @@ class MetagenomeSearchUtils:
         q = "SELECT json from features "
 
         # Handle query
+        where_clause = ""
         if query is not None and query != "":
             ele = []
             for tok in str(query).split():
@@ -247,21 +249,23 @@ class MetagenomeSearchUtils:
                 for k in self.text_fields:
                     ele.append("(%s like '%%%s%%')" % (k, tok))
             if len(ele) > 0:
-                q += "WHERE (%s) " % (" OR ".join(ele))
+                where_clause = "WHERE (%s) " % (" OR ".join(ele))
 
+        # Get Count
+        cursor = conn.execute("SELECT count(*) from features " + where_clause)
+        ct = cursor.fetchone()[0]
+
+        q += where_clause
         q += self._order_by(sort_by)
+        q += " LIMIT %d OFFSET %d" % (limit, start)
 
         query = q
         cursor = conn.execute(query)
-        ct = 0
-        rct = 0
         features = []
         for row in cursor:
-            if ct >= start and rct < limit:
-                f = self._process_features(json.loads(row[0]))
-                features.append(f)
-                rct += 1
-            ct += 1
+            f = self._process_features(json.loads(row[0]))
+            features.append(f)
+
         resp = {
             "num_found": ct,
             "start": start,
