@@ -1,11 +1,24 @@
 # -*- coding: utf-8 -*-
+from ast import keyword
+from errno import EILSEQ
 import json
 import uuid
 import requests
 import time
+import sqlite3
+import os
+import logging
+from gzip import decompress
+from multiprocessing import Pool
 
 from MetagenomeAPI.AMAUtils import AMAUtils
 from Workspace.WorkspaceClient import Workspace
+from installed_clients.AbstractHandleClient import AbstractHandle
+from cachetools import TTLCache, cached
+from threading import Lock
+
+# 640K should be enough for anyone...
+cache = TTLCache(1000, 600)
 
 
 def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching):
@@ -22,71 +35,58 @@ def get_contig_feature_info(ctx, config, params, sort_by, cache_id, msu, caching
                            f"lengths (size: {len(data['contig_lengths'])}) sizes do not match.")
     contig_ids = data['contig_ids']
     contig_lengths = data['contig_lengths']
-    if msu.status_good:
-        feature_counts = msu.search_contig_feature_counts(ctx["token"],
-                                params.get("ref"),
-                                min(8000, max(4000, params['start'] + params['limit'])))
-                                # len(contig_ids))
-        if sort_by[0] == 'contig_id' and sort_by[1] == 0:
-            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
-        elif sort_by[0] == 'contig_id':
-            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=False)))
-        elif sort_by[0] == 'length':
-            contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
-        elif sort_by[0] == 'feature_count':
-            # sort the contig_ids  and contig_lengths by feature_counts
-            contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=sort_by[1] == 0, key=lambda x: feature_counts.get(x[0], 0))))
-        # get feature_counts
-        range_start = params['start']
-        range_end = params['start'] + params['limit']
-
-        if range_end > len(contig_ids):
-            range_end = len(contig_ids)
-        if params['start'] > len(contig_ids):
-            contigs = []
-        else:
-            contigs = [
-                {
-                    "contig_id": contig_ids[i],
-                    "feature_count": feature_counts.get(
-                        contig_ids[i],
-                        msu.search_contig_feature_count(
-                            ctx["token"],
+    feature_counts = msu.search_contig_feature_counts(ctx["token"],
                             params.get("ref"),
-                            contig_ids[i]
-                        )
-                    ),
-                    "length": contig_lengths[i]
-                }
-                for i in range(range_start, range_end)
-            ]
-        result =  {
-            "contigs": contigs,
-            "num_found": len(data['contig_ids']),
-            "start": params['start']
-        }
-        # now cache answer for future.
-        caching.upload_to_cache(ctx['token'], cache_id, result)
+                            min(8000, max(4000, params['start'] + params['limit'])))
+                            # len(contig_ids))
+    if sort_by[0] == 'contig_id' and sort_by[1] == 0:
+        contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=True)))
+    elif sort_by[0] == 'contig_id':
+        contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=False)))
+    elif sort_by[0] == 'length':
+        contig_lengths, contig_ids = (list(t) for t in zip(*sorted(zip(contig_lengths, contig_ids), reverse=sort_by[1] == 0)))
+    elif sort_by[0] == 'feature_count':
+        # sort the contig_ids  and contig_lengths by feature_counts
+        contig_ids, contig_lengths = (list(t) for t in zip(*sorted(zip(contig_ids, contig_lengths), reverse=sort_by[1] == 0, key=lambda x: feature_counts.get(x[0], 0))))
+    # get feature_counts
+    range_start = params['start']
+    range_end = params['start'] + params['limit']
+
+    if range_end > len(contig_ids):
+        range_end = len(contig_ids)
+    if params['start'] > len(contig_ids):
+        contigs = []
     else:
-        result = {
-            "contigs": [],
-            "num_found": 0,
-            "start": params['start']
-        }
+        contigs = [
+            {
+                "contig_id": contig_ids[i],
+                "feature_count": feature_counts.get(contig_ids[i], 0),
+                "length": contig_lengths[i]
+            }
+            for i in range(range_start, range_end)
+        ]
+    result =  {
+        "contigs": contigs,
+        "num_found": len(data['contig_ids']),
+        "start": params['start']
+    }
+    # now cache answer for future.
+    caching.upload_to_cache(ctx['token'], cache_id, result)
     return result
 
 
 class MetagenomeSearchUtils:
     """Utilities for Searching Annotated Metagenome Assemblies in the KBase Search API"""
     def __init__(self, config):
-        if config.get('search-url'):
-            self.search_url = config.get('search-url')
-        else:
-            self.search_url = config.get('kbase-endpoint') + '/searchapi2/rpc'
         # check if server is active.
-        resp = requests.get(config.get('kbase-endpoint') + '/searchapi2')
-        self.status_good = resp.ok
+        self.workspace_url = config.get('workspace-url')
+        self.handle_service_url = config.get('handle-service-url')
+        self.scratch = config.get("scratch", "/tmp")
+        self.status_good = True
         self.debug = config.get("debug") == "1"
+        if self.debug:
+            logger = logging.getLogger()
+            logger.setLevel(logging.DEBUG)
         self.max_sort_mem_size = 250000
         # default fields to use for string searches.
         self.text_fields = ['functions', 'functional_descriptions']
@@ -99,65 +99,24 @@ class MetagenomeSearchUtils:
             fields = config['keyword-fields'].split(',')
             # combine with default fields
             self.keyword_fields = list(set(self.keyword_fields) + set(fields))
+        self.indexer = Indexer(self.handle_service_url, self.scratch)
+        self.pool = Pool(int(config.get("workers", "4")))
 
-    def search_feature_counts_by_type(self, token, ref):
-        """
-        Given a reference to a versioned Annotated Metgenome Assembly,
-        gets the count of feature types.
-        """
-        if not self.status_good:
-            return {"status": "not_good"}
-        num_results = 500000  # adjust this number
-        aggs = {
-            "group_by_state": {
-                "terms": {
-                    "field": "type",
-                    "size": num_results
-                }
-            }
-        }
-        (workspace_id, object_id, version) = ref.split('/')
-        # we use namespace 'WSVER' for versioned elasticsearch index.
-        ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
-
-        headers = {"Authorization": token}
-        params = {
-            "method": "search_objects",
-            "params": {
-                "query": {
-                    "bool": {
-                        "must": [{"term": {"parent_id": ama_id}}]
-                    }
-                },
-                "indexes": ["annotated_metagenome_assembly_features_version"],
-                "size": 0,
-                "aggs": aggs
-            },
-            "jsonrpc": "2.0",
-            "id": str(uuid.uuid4())
-        }
-        resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
-        if not resp.ok:
-            raise Exception(f"Not able to complete search request against {self.search_url} "
-                            f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
-        respj = resp.json()
-        return {
-            b['key']: b['count'] for b in respj['result']['aggregations']['group_by_state']['counts']
-        }
-
-
-    def search_contig_feature_count(self, token, ref, contig_id):
-        """
-        Given a contig, find the number of features it has
-        token         - workspace authentication token
-        ref           - workspace object reference
-        contig_id     - contig id of contig to query around
-        """
-        extra_must = [{'term': {'contig_ids': contig_id}}]
-        # limit and size set to 1 to avoid needlessly unenforcing 'terminate_after' in search_api
-        ret = self._elastic_query(token, ref, 1, 1, [('id', 1)], extra_must=extra_must, track_total_hits=True)
-        # this will correspond to 'feature_count'
-        return ret['num_found']
+    @cached(cache)
+    def get_object(self, ref, token):
+        ws = Workspace(self.workspace_url, token=token)
+        # Let's see if we have access
+        # TODO: Cache this lookup
+        logging.debug("Doing WS call")
+        try:
+            incl = ['features_handle_ref']
+            obj = ws.get_objects2({'objects': [{'ref': ref, 'included': incl}]})
+            objdata = obj["data"][0]
+        except Exception as ex:
+            logging.error(str(ex)[0:500])
+            # Maybe just raise the error
+            raise ex
+        return objdata
 
     def search_contig_feature_counts(self, token, ref, num_results):
         """
@@ -166,85 +125,90 @@ class MetagenomeSearchUtils:
         ref           - workspace object reference
         num_results   - number of results to return.
         """
-        if not self.status_good:
+        conn = self._get_sql_conn(ref, token)
+        # If conn is none then it isn't ready yet and return None
+        if not conn:
             return {}
-        (workspace_id, object_id, version) = ref.split('/')
-        # we use namespace 'WSVER' for versioned elasticsearch index.
-        ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
+        q = "SELECT contig_id, count(*) from features"
+        q += " GROUP BY contig_id LIMIT %d" % (num_results)
+        resp = {}
+        cursor = conn.execute(q)
+        for row in cursor:
+            resp[row[0]] = row[1]
+        return resp
 
-        headers = {"Authorization": token}        
-        params = {
-            "method": "search_objects",
-            "params": {
-                "query": {  # "term": {"parent_id": ama_id}},
-                    "bool": {
-                        "must": [{"term": {"parent_id": ama_id}}] 
-                    }
-                },
-                "indexes": ["annotated_metagenome_assembly_features_version"],
-                "size": 0,
-                "aggs": {
-                    "group_by_state": {
-                        "terms": {
-                            "field": "contig_ids",
-                            "size": num_results
-                        },
-                    }
-                }
-            },
-            "jsonrpc": "2.0",
-            "id": str(uuid.uuid4())
-        }
-        resp = requests.post(self.search_url, headers=headers, data=json.dumps(params))
-        if not resp.ok:
-            raise Exception(f"Not able to complete search request against {self.search_url} "
-                            f"with parameters: {json.dumps(params)} \nResponse body: {resp.text}")
-        respj = resp.json()
-        return {
-            b['key']: b['count'] for b in respj['result']['aggregations']['group_by_state']['counts']
-        }
+    def search_feature_counts_by_type(self, token, ref):
+        # Check permissions
+        conn = self._get_sql_conn(ref, token)
+        # If conn is none then it isn't ready yet and return None
+        if not conn:
+            return {}
+        q = "SELECT type, count(*) from features GROUP BY type"
+        resp = {}
+        cursor = conn.execute(q)
+        for row in cursor:
+            resp[row[0]] = row[1]
+        return resp
+
+    def search_contig_feature_count(self, token, ref, contig):
+        # Check permissions
+        conn = self._get_sql_conn(ref, token)
+        # If conn is none then it isn't ready yet and return None
+        if not conn:
+            return None
+        q = "SELECT count(*) from features WHERE contig_id='%s'" % (contig)
+        resp = {}
+        cursor = conn.execute(q)
+        for row in cursor:
+            return row[0]
 
     def search_region(self, token, ref, contig_id, region_start, region_length, start, limit, sort_by):
-        """
-        Search a region of features in a given contig
-        token         - workspace authentication token
-        ref           - workspace object reference
-        contig_id     - contig id of contig to query around
-        region_start  - integer position of the start of the region to search for
-        region_length - integer lenght of the region to search for
-        start         - elasticsearch page start delimeter
-        limit         - elasticserch page limit
-        sort_by       - list of tuples of (field to sort by, ascending bool) for elasticsearch
-        """
-        if start is None:
-            start = 0
-        if limit is None:
-            limit = 100
-        if sort_by is None:
-            sort_by = [('starts', 1), ('stops', 1)]
+        conn = self._get_sql_conn(ref, token)
+        # If conn is none then it isn't ready yet and return None
+        if not conn:
+            resp = {
+                "num_found": 0,
+                "start": start,
+                "query": "",
+                "region_start": region_start,
+                "region_length": region_length,
+                "contig_id": contig_id,
+                "features": [],
+                "indexing": True
+            }
+            return resp
+        stop = region_start + region_length
+        q = "SELECT json from features "
+        # TODO: Handle direction
+        # q += "WHERE ((starts>=%d AND starts<=%d) " % (region_start, stop)
+        where_clause = "WHERE ((starts BETWEEN %d AND %d) " % (region_start, stop)
+        where_clause += "OR (stops BETWEEN %d AND %d) " % (region_start, stop)
+        where_clause += "OR (starts<=%d AND stops>=%d)) " % (region_start, stop)
+        where_clause += " AND contig_id='%s'" % (contig_id)
 
-        t1 = time.time()
-        extra_must = [
-            {"range": {
-                    "starts": {
-                        "gte": int(region_start)
-                    }
-                }
-            },{"range": {
-                    "stops": {
-                        "lte": int(region_start + region_length)
-                    }
-                }
-            },{"term": {"contig_ids": contig_id}}
-        ]
-        ret = self._elastic_query(token, ref, limit, start, sort_by, extra_must=extra_must)
-        # not sure we need to include any of these
-        ret['region_start'] = region_start
-        ret['contig_id'] = contig_id
-        ret['region_length'] = region_length
-        if self.debug:
-            print(("    (overall-time=" + str(time.time() - t1) + ")"))
-        return ret
+        cursor = conn.execute("SELECT count(*) from features " + where_clause)
+        ct = cursor.fetchone()[0]
+
+        q += where_clause
+        q += self._order_by(sort_by)
+        q += " LIMIT %d OFFSET %d" % (limit, start)
+        query = q
+        cursor = conn.execute(query)
+        features = []
+        for row in cursor:
+            f = self._process_features(json.loads(row[0]))
+            features.append(f)
+
+        resp = {
+            "num_found": ct,
+            "start": start,
+            "query": query,
+            "region_start": region_start,
+            "region_length": region_length,
+            "contig_id": contig_id,
+            "features": features
+        }
+        return resp
 
     def search(self, token, ref, start, limit, sort_by, query):
         """
@@ -262,151 +226,245 @@ class MetagenomeSearchUtils:
             limit = 50
         if sort_by is None:
             sort_by = [('id', 1)]
+        conn = self._get_sql_conn(ref, token)
+        # If conn is none then it isn't ready yet and return None
+        if not conn:
+            resp = {
+                "num_found": 0,
+                "start": start,
+                "query": "",
+                "features": [],
+                "indexing": True
+            }
+            return resp
+        q = "SELECT json from features "
 
-        extra_must = []
-        if query:
-            shoulds = []
-            for field in self.keyword_fields:
-                # for direct matches
-                shoulds.append({
-                    "match": {field: {"query": query}}
-                })
-                # for matching prefixes
-                shoulds.append({
-                    "prefix": {field: {"value": query}}
-                })
-            # to improve the searchability, we tokenize the query on text fields
-            # to match elasticsearch behavior.
-            query_tokens = str(query).split()
-            for idx, query_token in enumerate(query_tokens):
-                for field in self.text_fields:
-                    # for direct matches
-                    shoulds.append({
-                        "match": {field: {"query": query_token}}
-                    })
-                    # for matching prefixes, only for last token
-                    if idx == len(query_tokens) - 1:
-                        shoulds.append({
-                            "prefix": {field: {"value": query_token}}
-                        })
-            extra_must.append({'bool': {'should': shoulds}})
+        # Handle query
+        where_clause = ""
+        if query is not None and query != "":
+            ele = []
+            for tok in str(query).split():
+                for k in self.keyword_fields:
+                    ele.append("(%s='%s')" % (k, tok))
+                for k in self.text_fields:
+                    ele.append("(%s like '%%%s%%')" % (k, tok))
+            if len(ele) > 0:
+                where_clause = "WHERE (%s) " % (" OR ".join(ele))
 
-        t1 = time.time()
-        ret = self._elastic_query(token, ref, limit, start, sort_by, extra_must=extra_must, track_total_hits=True)
-        if self.debug:
-            print(("    (overall-time=" + str(time.time() - t1) + ")"))
-        return ret
+        # Get Count
+        cursor = conn.execute("SELECT count(*) from features " + where_clause)
+        ct = cursor.fetchone()[0]
 
-    def _elastic_query(self, token, ref, limit, start, sort_by, extra_must=[], aggs=None, track_total_hits=False):
-        """
-        Perform the query against the Search API 2, to get results from elasticsearch.
-        token      - workspace authentication token
-        ref        - workspace object reference
-        limit      - elasticsearch page limit
-        start      - elasticsearch page start delimiter
-        sort_by    - list of tuples of (field to sort by, ascending bool) for elasticsearch
-        extra_must - list of additional elasticsearch eql json blobs to include as query
-        """
-        (workspace_id, object_id, version) = ref.split('/')
-        # we use namespace 'WSVER' for versioned elasticsearch index.
-        ama_id = f'WSVER::{workspace_id}:{object_id}:{version}'
+        q += where_clause
+        q += self._order_by(sort_by)
+        q += " LIMIT %d OFFSET %d" % (limit, start)
 
-        headers = {"Authorization": token}
-        query_data = {
-            "method": "search_objects",
-            "params": {
-                "query": {
-                    "bool": {
-                        "must": [{"term": {"parent_id": ama_id}}] + extra_must 
-                    }
-                },
-                "indexes": ["annotated_metagenome_assembly_features_version"],
-                "from": start,
-                "size": limit,
-                "sort": [{s[0]: {"order": "asc" if s[1] else "desc"}} for s in sort_by]
-            },
-            "jsonrpc": "2.0",
-            "id": str(uuid.uuid4())
+        query = q
+        cursor = conn.execute(query)
+        features = []
+        for row in cursor:
+            f = self._process_features(json.loads(row[0]))
+            features.append(f)
+
+        resp = {
+            "num_found": ct,
+            "start": start,
+            "query": query,
+            "features": features
         }
-        if aggs:
-            query_data['params']['aggs'] = aggs
-        if track_total_hits:
-            query_data['params']['track_total_hits'] = True
-        if self.debug:
-            print(f"querying {self.search_url}, with params: {json.dumps(query_data)}")
-        resp = requests.post(self.search_url, headers=headers, data=json.dumps(query_data))
-        if not resp.ok:
-            raise Exception(f"Not able to complete search request against {self.search_url} "
-                            f"with parameters: {json.dumps(query_data)} \nResponse body: {resp.text}")
-        respj = resp.json()
-        return self._process_resp(respj['result'], start, query_data)
+        return resp
 
-    def _process_resp(self, resp, start, params):
-        """
-        Format the response
-        resp   - json response from search api
-        start  - integer start of pagination
-        params - parameters used to search against SearchAPI2
-        """
-        if resp.get('hits'):
-            hits = resp['hits']
-            return {
-                "num_found": int(resp['count']),
-                "start": start,
-                "query": params,
-                # this should handle empty results list of hits, also sort by feature_id
-                "features": [self._process_feature(h['doc']) for h in hits]
-            }
-        # empty list in reponse for hits
-        elif 'hits' in resp:
-            return {
-                "num_found": int(resp['count']),
-                "start": start,
-                "query": params,
-                "features": []
-            }
-        else:
-            # only raise if no hits found at highest level.
-            raise RuntimeError(f"no 'hits' with params {json.dumps(params)}\n in http response: {resp}")
+    def _order_by(self, sort_by):
+        # handle sort_by
+        if sort_by:
+            ele = []
+            for sb in sort_by:
+                key = sb[0]
+                if key == "contig_ids":
+                    key = "contig_id"
+                if sb[1] > 0:
+                    ele.append("%s ASC" % (key))
+                else:
+                    ele.append("%s DESC" % (key))
+            if len(ele) > 0:
+                return " ORDER BY %s" % (','.join(ele))
+        return ""
 
-    def _process_feature(self, hit_source):
-        """
-        Format individual features.
-        hit_source - the '_source' fields of the elasticsearch response body of a feature.
-        """
-        starts = hit_source.get('starts')
-        stops = hit_source.get('stops')
-        contig_ids = hit_source.get('contig_ids')
-        strands = hit_source.get('strands')
-        if starts != None and len(starts) == len(stops) and \
-           len(stops) == len(strands) and len(strands) == len(contig_ids):
-
-            location = [{
-                'contig_id': contig_ids[i],
-                'start': starts[i],
-                'stop': stops[i],
-                'strand': strands[i]
-            } for i in range(len(starts))]
-        else:
-            location = []
-
-        if len(location) > 0:
-            # TODO: FIX THIS NOT ACTUALLY ACCURATE
-            gloc = location[0]
-        functions = hit_source.get('functions', [])
-        if functions is not None:
-            functions = '; '.join(functions)
+    def _process_features(self, feature):
+        locs = []
+        for loc in feature["location"]:
+            locs.append({
+                "contig_id": loc[0],
+                "start": loc[1],
+                "stop": loc[3],
+                "strand": loc[2]
+            })
         return {
-            "location": location,
-            "feature_id": hit_source.get('id'),
-            "dna_sequence": hit_source.get('dna_sequence'),
-            "parent_gene": hit_source.get('parent_gene'),
-            "size": hit_source.get('size'),
-            "functional_descriptions": hit_source.get('functional_descriptions'),
-            "warnings": hit_source.get('warnings'),
-            "feature_type": hit_source.get('type'),
-            "global_location": gloc,
-            "aliases": hit_source.get('aliases', {}),
-            "function": functions,
-            "ontology_terms": {}
+            "aliases": feature.get("aliases"),
+            "feature_id": feature["id"],
+            "feature_type": feature["type"],
+            "location": locs,
+            "global_location": locs[0],
+            "dna_sequence": feature["dna_sequence"],
+            "parent_gene": feature.get("parent_gene"),
+            "size": feature["dna_sequence_length"],
+            "function": feature.get("functions", [""])[0],
+            "functional_descriptions": None,
+            "ontology_terms": {},
+            "warnings": feature.get("warnings")
         }
+
+    def _get_sql_conn(self, ref, token):
+        """
+        This will connect to an existing sql database.
+        If one doesn't exist then it request it be generate it.
+        """
+        objdata = self.get_object(ref, token)
+        if objdata is None:
+            return None
+
+        ready, sqlf = self.indexer.is_indexed(ref)
+        if ready:
+            conn = sqlite3.connect(sqlf)
+            return conn
+        args = [objdata, sqlf, token]
+        self.pool.apply_async(self.indexer._create_index, args, {}, None, self._error)
+        return None
+        # return self._create_index(objdata, sqlf, token)
+
+    def _error(self, err):
+        logging.error(err)
+        print(err)
+
+class Indexer():
+    # Allow up to 15 minutes to index
+    _TIMEOUT = 15*60
+    _LOG_TIME = 30
+
+    def __init__(self, handle_service_url, scratch):
+        self.handle_service_url = handle_service_url
+        self.scratch = scratch
+
+    def is_indexed(self, ref):
+        sqlf = self.sqlfile(ref)
+        return os.path.exists(sqlf), sqlf
+
+    def sqlfile(self, ref):
+        return "%s/%s.sql" % (self.scratch, ref.replace("/", ":"))
+
+    def _create_index(self, objdata, sqlf, token):
+        """
+        This actually creates the sqlite file and
+        populates it.
+
+        Inputs:
+        obj: previously fetched WS object data
+        sqlf: name of the sqlite file to generate
+        token: token associated with the request
+        """
+        if os.path.exists(sqlf):
+            logging.info("Index already generated")
+            return
+        copied = objdata.get("copied")
+
+        # If this is a copy, let's try to reuse the
+        # the source sql
+        if copied:
+            osql = self.sqlfile(copied)
+            if os.path.exists(osql):
+                os.link(osql, sqlf)
+                return
+
+        tmpsql = '%s.tmp' % (sqlf)
+        if os.path.exists(tmpsql):
+            st = os.stat(tmpsql)
+            if st.st_mtime > (time.time() - self._TIMEOUT):
+                logging.debug("Already indexing")
+                return
+            # Potentially failed attempt, cleanup old file
+            logging.warn("Removing stale index file")
+            os.unlink(tmpsql)
+
+        logging.info("Generating index %s" % (sqlf))
+        start_time = time.time()
+        conn = sqlite3.connect(tmpsql)
+        hid = objdata["data"]["features_handle_ref"]
+        logging.debug("Fetching hid=%s" % (hid))
+        features = self._fetch_data(hid, token)
+
+        # TODO: Make these more configurable
+        conn.execute('''CREATE TABLE features
+             (id INT PRIMARY KEY     NOT NULL,
+             contig_id        TEXT    NOT NULL,
+             type             TEXT    NOT NULL,
+             starts           INT     NOT NULL,
+             stops            INT     NOT NULL,
+             size             INT     NOT NULL,
+             functions        TEXT    NOT NULL,
+             functional_descriptions   TEXT    NOT NULL,
+             strands          TEXT    NOT NULL,
+             json             BLOB    NOT NULL);
+             ''')
+        conn.execute("create index starts on features (starts);")
+        conn.execute("create index stops on features (stops);")
+        conn.execute("create index cid on features (contig_id);")
+        conn.execute("create index size on features (size);")
+        conn.execute("create index type on features (type);")
+        conn.execute("create index functions on features (functions);")
+        conn.execute("create index descr on features (functional_descriptions);")
+        ct = 0
+        seen = {}
+        last_update = time.time()
+        logging.debug("Starting indexing: %s" % (sqlf))
+        for f in features:
+            id = f["id"]
+            if id in seen:
+                logging.warn("Duplicate ID")
+                continue
+            seen[id] = 1
+            loc = f["location"][0]
+            length = loc[3]
+            if loc[2] == "+":
+                start = loc[1]
+                stop = start + length
+            else:
+                start = loc[1] - length
+                stop = loc[1]
+
+            values = [f["id"],
+                      loc[0],
+                      f["type"],
+                      start,
+                      stop,
+                      length,
+                      f.get("functions",[''])[0],
+                      f.get("functions",[''])[0],
+                      loc[2],
+                      json.dumps(f)]
+#                      f.get("functions",[''])[0].replace('""', "''"),
+    
+            query = "INSERT INTO features VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            conn.execute(query, values)
+            elapsed = time.time() - last_update
+            if elapsed >= self._LOG_TIME:
+                logging.info("Indexed %s %d features" % (sqlf, ct))
+                conn.commit()
+                last_update = time.time()
+            ct += 1
+        conn.commit()
+        os.rename(tmpsql, sqlf)
+        # If this was a copy then let's link them together
+        if copied:
+            os.link(sqlf, osql)
+        logging.info("Indexing complete in %ds" % (time.time() - start_time))
+        return True
+
+    def _fetch_data(self, hid, token):
+        hs = AbstractHandle(self.handle_service_url, token=token)
+        hobj = hs.hids_to_handles([hid])[0]
+        url = "%s/node/%s?download_raw" % (hobj["url"], hobj["id"])
+        resp = requests.get(url, headers={"Authorization": "OAuth %s" % (token)})
+        rawdata = decompress(resp.content)
+        features = json.loads(rawdata)
+        return features
+

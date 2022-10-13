@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import unittest
+from xmlrpc.client import Server
+from nose.plugins.attrib import attr
 import os
 import json  # noqa: F401
 import time
-import requests  # noqa: F401
 import shutil
 
 from os import environ
@@ -12,9 +13,6 @@ try:
 except:
     from configparser import ConfigParser  # py3
 
-# from pprint import pprint
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
 _DIR = os.path.dirname(os.path.realpath(__file__))
 
 from MetagenomeUtils.MetagenomeUtilsClient import MetagenomeUtils
@@ -25,6 +23,8 @@ from MetagenomeAPI.MetagenomeAPIImpl import MetagenomeAPI
 from MetagenomeAPI.MetagenomeAPIServer import MethodContext
 from MetagenomeAPI.authclient import KBaseAuth as _KBaseAuth
 from installed_clients.DataFileUtilClient import DataFileUtil
+import MetagenomeAPI.MetagenomeSearchUtils as MSU
+from Workspace.baseclient import ServerError
 
 
 class MetagenomeAPITest(unittest.TestCase):
@@ -32,6 +32,7 @@ class MetagenomeAPITest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         token = environ.get('KB_AUTH_TOKEN', None)
+        cls.token = token
         config_file = environ.get('KB_DEPLOYMENT_CONFIG', None)
         cls.cfg = {}
         config = ConfigParser()
@@ -78,13 +79,21 @@ class MetagenomeAPITest(unittest.TestCase):
         assembly_filename = 'small_bin_contig_file.fasta'
         cls.assembly_fasta_file_path = os.path.join(cls.scratch, assembly_filename)
         shutil.copy(os.path.join("data", assembly_filename), cls.assembly_fasta_file_path)
+        sqlf = "%s.sql" % (cls.ref.replace("/", ":"))
+        cls.sql = os.path.join(cls.scratch, sqlf)
+        shutil.copy(os.path.join("data", "preindexed.sql"), cls.sql)
+        if os.environ.get("SKIP_BINS"):
+            return
+        cls.uploadBins()
 
+
+    @classmethod
+    def uploadBins(cls):
         assembly_params = {
             'file': {'path': cls.assembly_fasta_file_path},
             'workspace_name': cls.wsName,
             'assembly_name': 'MyAssembly'
         }
-        print(os.path.isfile(cls.assembly_fasta_file_path))
 
         cls.assembly_ref_1 = cls.au.save_assembly_from_fasta(assembly_params)
         print('Assembly1:' + cls.assembly_ref_1)
@@ -93,7 +102,6 @@ class MetagenomeAPITest(unittest.TestCase):
         test_directory_name = 'test_maxbindata'
         cls.test_directory_path = os.path.join(cls.scratch, test_directory_name)
         os.makedirs(cls.test_directory_path)
-        print(os.listdir(cls.test_directory_path))
         for item in os.listdir(os.path.join("data", "MaxBin_Result_Sample")):
             shutil.copy(os.path.join("data", "MaxBin_Result_Sample", item),
                         os.path.join(cls.test_directory_path, item))
@@ -300,12 +308,7 @@ class MetagenomeAPITest(unittest.TestCase):
         """test the 'search' function
         NOTE: This test is tied to a version of workspace object in elasticsearch.
         """
-        # self.maxDiff=None
-        print('-'*80)
-        print('-'*80)
-        print('reference', self.ref)
-        print('-'*80)
-        print('-'*80)
+
         params = {
             'ref': self.ref, #  reference to an AnnotatedMetagenomeAssembly object
             'sort_by': [('id', 1)],
@@ -317,11 +320,7 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertTrue('start' in ret, msg=f"returned: {ret.keys()}")
         self.assertTrue('num_found' in ret, msg=f"returned: {ret.keys()}")
         self.assertTrue('query' in ret, msg=f"returned: {ret.keys()}")
-        # compare_path = os.path.join(_DIR, "data", "search_test_resp_ci_43655_58_1.json")
-        # with open(compare_path) as f:
-        #     compare = json.load(f)
         self.assertEqual(len(ret['features']), 10)
-        # self.assertEqual(ret, compare)
 
     # @unittest.skip('x')
     def test_get_annotated_metagenome_assembly(self):
@@ -350,7 +349,6 @@ class MetagenomeAPITest(unittest.TestCase):
         # no query
         search_params = {'ref': self.binnedcontigs_ref_1}
         ret = self.getImpl().search_binned_contigs(self.getContext(), search_params)[0]
-        # pprint(ret)
         self.assertEquals(ret['num_found'], 3)
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['start'], 0)
@@ -410,7 +408,6 @@ class MetagenomeAPITest(unittest.TestCase):
         # no query
         search_params = {'ref': self.binnedcontigs_ref_1, 'bin_id': 'out_header.002.fasta', 'limit': 5}
         ret = self.getImpl().search_contigs_in_bin(self.getContext(), search_params)[0]
-        # pprint(ret)
         self.assertEquals(ret['num_found'], 369)
         self.assertEquals(ret['query'], '')
         self.assertEquals(ret['bin_id'], 'out_header.002.fasta')
@@ -468,3 +465,124 @@ class MetagenomeAPITest(unittest.TestCase):
         self.assertEquals(ret['start'], 0)
         self.assertEquals(len(ret['contigs']), 5)
         self.assertEquals(ret['contigs'][0]['contig_id'], 'NODE_2492_length_1446_cov_9.165283')
+
+    @attr("indexing")
+    def test_indexing(self):
+        # Test a copy
+        objname = "a_metagenome"
+        src_ws = "KBaseTestData"
+        src_obj = "metagenome_badabing.assembly.fa_metagenome"
+
+        ret = self.wsClient.copy_object({'from': {'workspace': src_ws, 'name': src_obj, 'ver': 1},
+                        'to': {'wsid': self.ws_info[0], 'name': objname}})
+        ref = '%d/%d/%d' % (ret[6], ret[0], ret[4])
+        msu = MSU.MetagenomeSearchUtils(self.cfg)
+        resp = msu.search(self.token, ref, 0, 10, None, None)
+        if resp is None or "indexing" in resp:
+            time.sleep(0.2)
+            resp = msu.search(self.token, ref, 0, 10, None, None)
+        self.assertEquals(len(resp["features"]), 10)
+
+        sqlf = os.path.join(self.scratch, '%s.sql' % (ref.replace("/", ":")))
+        self.assertGreater(os.stat(sqlf).st_nlink, 1)
+        # Test an unindexed object
+        src_ws = "KBaseTestData"
+        src_obj = "metagenome_small"
+
+        ret = self.wsClient.copy_object({'from': {'workspace': src_ws, 'name': src_obj, 'ver': 1},
+                        'to': {'wsid': self.ws_info[0], 'name': src_obj}})
+        ref = '%d/%d/%d' % (ret[6], ret[0], ret[4])
+        # Let's do several searches to see the empty response
+        sqlf = os.path.join(self.scratch, '%s.sql' % (ref.replace("/", ":")))
+        if os.path.exists(sqlf):
+            os.unlink(sqlf)
+        resp = msu.search_contig_feature_counts(self.token, ref, 10)
+        self.assertEquals(resp, {})
+        # time.sleep(0.05)
+        resp = msu.search_feature_counts_by_type(self.token, ref)
+        self.assertEquals(resp, {})
+        resp = msu.search_contig_feature_count(self.token, ref, "123")
+        self.assertIsNone(resp)
+
+        # Let's reset things
+        time.sleep(1)
+        if os.path.exists(sqlf):
+            os.unlink(sqlf)
+        resp = msu.search_region(self.token, ref, "123", 0, 10000, 0, 10, None)
+        self.assertIn("indexing", resp)
+        resp = msu.search(self.token, ref, 0, 10, None, None)
+        self.assertIn("indexing", resp)
+        ct = 0
+        while ("indexing" in resp) and ct < 60:
+            time.sleep(0.5)
+            resp = msu.search(self.token, ref, 0, 10, None, None)
+            ct += 1
+        self.assertEquals(len(resp["features"]), 10)
+        resp = msu.search(self.token, ref, None, None, None, None)
+        self.assertEquals(len(resp["features"]), 50)
+
+        resp = msu.search(self.token, ref, None, None, [["contig_ids", -1]], None)
+        self.assertEquals(len(resp["features"]), 50)
+
+        self.assertGreater(os.stat(sqlf).st_nlink, 1)
+        # Test permission or WS error
+        with self.assertRaises(ServerError):
+            resp = msu.search(self.token, "1000000/1/1", 0, 10, None, None)
+
+    @attr("indexer")
+    def test_indexer(self):
+        # Test an unindexed object
+        src_ws = "KBaseTestData"
+        src_obj = "metagenome_small"
+        name_ref = "%s/%s/1" % (src_ws, src_obj)
+
+        ref = self.wsClient.get_objects2({'objects': [{'ref': name_ref}]})['data'][0]['path'][0]
+        indexer = MSU.Indexer(self.cfg["handle-service-url"], self.scratch)
+        sqlf = indexer.sqlfile(ref)
+        if os.path.exists(sqlf):
+            os.unlink(sqlf)
+        msu = MSU.MetagenomeSearchUtils(self.cfg)
+        obj = msu.get_object(ref, self.token)
+        is_indexed, _ = indexer.is_indexed(ref)
+        self.assertFalse(is_indexed)
+        st = time.time()
+        ret = indexer._create_index(obj, sqlf, self.token)
+        self.assertTrue(ret)
+        is_indexed, _ = indexer.is_indexed(ref)
+        self.assertTrue(is_indexed)
+        elapsed = time.time() - st
+        print("Indexing took %s secs" % (elapsed))
+
+    @attr("contig")
+    def test_contig_search(self):
+        class caching:
+            def __init__(self):
+                self.called = False
+
+            def upload_to_cache(self, token, cid, result):
+                self.called = True
+
+        # Test an unindexed object
+        msu = MSU.MetagenomeSearchUtils(self.cfg)
+        src_ws = "KBaseTestData"
+        src_obj = "metagenome_small"
+        name_ref = "%s/%s/1" % (src_ws, src_obj)
+        mcache = caching()
+        p = {"ref": self.ref, "start": 0, "limit": 10}
+        resp = MSU.get_contig_feature_info(self.ctx, self.cfg, p, ["contig_id", 1], "123", msu, mcache)
+        self.assertEquals(len(resp["contigs"]), 10)
+        self.assertTrue(mcache.called)
+        resp = MSU.get_contig_feature_info(self.ctx, self.cfg, p, ["contig_id", 0], "123", msu, mcache)
+        self.assertEquals(len(resp["contigs"]), 10)
+        resp = MSU.get_contig_feature_info(self.ctx, self.cfg, p, ["feature_count", 1], "123", msu, mcache)
+        self.assertEquals(len(resp["contigs"]), 10)
+        resp = MSU.get_contig_feature_info(self.ctx, self.cfg, p, ["length", 1], "123", msu, mcache)
+        self.assertEquals(len(resp["contigs"]), 10)
+        ct = resp["num_found"]
+        p = {"ref": self.ref, "start": ct-5, "limit": 10}
+        resp = MSU.get_contig_feature_info(self.ctx, self.cfg, p, ["feature_count", 1], "123", msu, mcache)
+        self.assertEquals(len(resp["contigs"]), 5)
+        p = {"ref": self.ref, "start": ct+1, "limit": 10}
+        resp = MSU.get_contig_feature_info(self.ctx, self.cfg, p, ["feature_count", 1], "123", msu, mcache)
+        self.assertEquals(len(resp["contigs"]), 0)
+

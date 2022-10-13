@@ -1,3 +1,7 @@
+# 2.4.0
+- Moved to using an sqlite database for supporting feature search 
+  instead of Elastic Search
+
 # 2.3.4
 - Moved data objects to public workspace
 
